@@ -31,10 +31,10 @@ export async function GET() {
         price_cents,
         deposit_paid_cents,
         payment_status,
-        customers!inner(first_name, last_name),
-        courses!inner(name),
-        instructors!inner(user_id),
-        dashboard_users(first_name, last_name)
+        customers:customers!inner(first_name, last_name),
+        courses:courses!inner(name),
+        instructors:instructors!inner(user_id),
+        dashboard_users:dashboard_users(first_name, last_name)
       `)
       .gte('start_time', startOfDay.toISOString())
       .lte('end_time', endOfDay.toISOString())
@@ -42,42 +42,53 @@ export async function GET() {
 
     if (bookingsError) throw bookingsError;
 
+    if (!bookings || bookings.length === 0) {
+      return NextResponse.json({
+        bookingsToday: 0,
+        instructorsWorking: 0,
+        expectedRevenue: 0,
+        pendingPayments: 0,
+        schedule: [],
+        issues: []
+      });
+    }
+
     // Get unique instructors working today
-    const instructorIds = [...new Set(bookings?.map(b => b.instructors.user_id) || [])];
-    const instructorsWorking = instructorIds.length;
+    const instructorIds = new Set(bookings.map((b: any) => b.instructors?.user_id).filter(Boolean));
+    const instructorsWorking = instructorIds.size;
 
     // Calculate KPIs
-    const bookingsToday = bookings?.length || 0;
-    const expectedRevenue = bookings?.reduce((sum, b) => sum + (b.price_cents || 0), 0) || 0;
-    const pendingPayments = bookings?.filter(b => 
+    const bookingsToday = bookings.length;
+    const expectedRevenue = bookings.reduce((sum: number, b: any) => sum + (b.price_cents || 0), 0);
+    const pendingPayments = bookings.filter((b: any) => 
       b.payment_status === 'unpaid' || b.payment_status === 'pending'
-    ).length || 0;
+    ).length;
 
     // Format schedule
-    const schedule = bookings?.map(b => ({
+    const schedule = bookings.map((b: any) => ({
       id: b.id,
       time: new Date(b.start_time).toLocaleTimeString('en-ZA', { 
         hour: '2-digit', 
         minute: '2-digit' 
       }),
-      customer: `${b.customers.first_name} ${b.customers.last_name.charAt(0)}.`,
-      course: b.courses.name,
-      instructor: b.dashboard_users.first_name,
+      customer: `${b.customers?.first_name || 'Unknown'} ${(b.customers?.last_name || '?').charAt(0)}.`,
+      course: b.courses?.name || 'Unknown Course',
+      instructor: b.dashboard_users?.first_name || 'Unknown',
       status: b.status
-    })) || [];
+    }));
 
     // Sort by time
-    schedule.sort((a, b) => a.time.localeCompare(b.time));
+    schedule.sort((a: any, b: any) => a.time.localeCompare(b.time));
 
     // Get issues (pending payments)
     const issues = bookings
-      ?.filter(b => b.payment_status === 'unpaid' || b.payment_status === 'pending')
-      .map(b => ({
+      .filter((b: any) => b.payment_status === 'unpaid' || b.payment_status === 'pending')
+      .map((b: any) => ({
         id: b.id,
         type: 'payment',
-        message: `${b.customers.first_name} ${b.customers.last_name} - payment ${b.payment_status.replace('_', ' ')}`,
+        message: `${b.customers?.first_name || 'Unknown'} ${b.customers?.last_name || 'Unknown'} - payment ${b.payment_status?.replace('_', ' ') || 'pending'}`,
         severity: 'medium' as const
-      })) || [];
+      }));
 
     return NextResponse.json({
       bookingsToday,
