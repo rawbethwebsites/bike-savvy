@@ -43,7 +43,7 @@ export async function getCurrentUserProfile() {
     return null;
   }
   
-  return profile;
+  return profile as { id: string; email: string; full_name: string; role: string };
 }
 
 // Helper to check if user has a specific role
@@ -60,7 +60,7 @@ export async function hasRole(requiredRole: string) {
     'owner': 3
   };
   
-  const userRoleLevel = roleHierarchy[profile.role as keyof typeof roleHierarchy] || 0;
+  const userRoleLevel = roleHierarchy[profile.role] || 0;
   const requiredRoleLevel = roleHierarchy[requiredRole] || 0;
   
   return userRoleLevel >= requiredRoleLevel;
