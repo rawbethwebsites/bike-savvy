@@ -3,31 +3,47 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
-// Mock data for development - will be replaced with Supabase queries
-const mockData = {
-  bookingsToday: 6,
-  instructorsWorking: 2,
-  expectedRevenue: 5850,
-  pendingPayments: 1,
-  schedule: [
-    { id: '1', time: '09:00', customer: 'Lerato M.', course: 'Beginner Rider', instructor: 'Daniel', status: 'confirmed' },
-    { id: '2', time: '11:30', customer: 'John D.', course: 'Licence Prep', instructor: 'Michael', status: 'confirmed' },
-    { id: '3', time: '14:00', customer: 'Sarah W.', course: 'Practical Skills', instructor: 'Daniel', status: 'pending_payment' },
-  ],
-  issues: [
-    { id: '1', type: 'payment', message: 'Sarah W. - payment pending', severity: 'medium' },
-    { id: '2', type: 'conflict', message: 'Double-booking detected for Friday 14:00', severity: 'high' },
-  ]
-};
+interface DashboardData {
+  bookingsToday: number;
+  instructorsWorking: number;
+  expectedRevenue: number;
+  pendingPayments: number;
+  schedule: Array<{
+    id: string;
+    time: string;
+    customer: string;
+    course: string;
+    instructor: string;
+    status: string;
+  }>;
+  issues: Array<{
+    id: string;
+    type: string;
+    message: string;
+    severity: 'low' | 'medium' | 'high';
+  }>;
+}
 
 export default function TodayDashboard() {
-  const [data, setData] = useState(mockData);
+  const [data, setData] = useState<DashboardData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Simulate loading - will be replaced with Supabase query
-    const timer = setTimeout(() => setIsLoading(false), 500);
-    return () => clearTimeout(timer);
+    async function fetchDashboard() {
+      try {
+        const res = await fetch('/api/dashboard');
+        if (!res.ok) throw new Error('Failed to fetch dashboard data');
+        const jsonData = await res.json();
+        setData(jsonData);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Unknown error');
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchDashboard();
   }, []);
 
   if (isLoading) {
@@ -36,6 +52,23 @@ export default function TodayDashboard() {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
           <p className="mt-4 text-gray-600">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 font-semibold">Error loading dashboard</p>
+          <p className="text-gray-600 mt-2">{error || 'Unknown error'}</p>
+          <button 
+            onClick={() => window.location.reload()}
+            className="mt-4 text-blue-600 hover:underline"
+          >
+            Retry
+          </button>
         </div>
       </div>
     );
@@ -92,23 +125,23 @@ export default function TodayDashboard() {
           <KpiCard
             title="Bookings Today"
             value={data.bookingsToday.toString()}
-            trend="+2 from yesterday"
-            trendUp={true}
+            trend={data.bookingsToday > 0 ? `${data.schedule.length} scheduled` : 'No bookings'}
+            trendUp={data.bookingsToday > 0}
           />
           <KpiCard
             title="Instructors Working"
             value={data.instructorsWorking.toString()}
-            subtitle="Daniel, Michael"
+            subtitle={data.instructorsWorking > 0 ? 'Active today' : 'None scheduled'}
           />
           <KpiCard
             title="Expected Revenue"
             value={`R${data.expectedRevenue.toLocaleString()}`}
-            trend="85% collected"
+            trend={`${data.pendingPayments} pending payment`}
           />
           <KpiCard
             title="Pending Payments"
             value={data.pendingPayments.toString()}
-            severity="warning"
+            severity={data.pendingPayments > 0 ? 'warning' : undefined}
             onClick={() => {}}
           />
         </div>
@@ -148,14 +181,9 @@ export default function TodayDashboard() {
                           <p className="text-sm text-gray-500">{booking.course}</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-4">
-                        <div className="text-right">
-                          <p className="text-sm text-gray-500">{booking.instructor}</p>
-                          <StatusBadge status={booking.status} />
-                        </div>
-                        <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">
-                          Edit
-                        </button>
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm text-gray-600">{booking.instructor}</span>
+                        <StatusBadge status={booking.status} />
                       </div>
                     </div>
                   ))}
