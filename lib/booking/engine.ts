@@ -75,13 +75,13 @@ export async function checkAvailability(
   
   // Check instructor availability
   const instructorCheck = await checkInstructorAvailability(supabase, proposal);
-  if (!instructorCheck.isAvailable) {
+  if (!instructorCheck.isAvailable && instructorCheck.conflict) {
     conflicts.push(instructorCheck.conflict);
   }
   
   // Check customer availability
   const customerCheck = await checkCustomerAvailability(supabase, proposal);
-  if (!customerCheck.isAvailable) {
+  if (!customerCheck.isAvailable && customerCheck.conflict) {
     conflicts.push(customerCheck.conflict);
   }
   
@@ -93,13 +93,13 @@ export async function checkAvailability(
   
   // Check business hours
   const businessHoursCheck = await checkBusinessHours(supabase, proposal);
-  if (!businessHoursCheck.isWithinHours) {
+  if (!businessHoursCheck.isWithinHours && businessHoursCheck.conflict) {
     conflicts.push(businessHoursCheck.conflict);
   }
   
   // Check buffers
   const bufferCheck = await checkBuffers(supabase, proposal);
-  if (!bufferCheck.hasBuffers) {
+  if (!bufferCheck.hasBuffers && bufferCheck.conflict) {
     conflicts.push(bufferCheck.conflict);
   }
   

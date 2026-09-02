@@ -47,20 +47,20 @@ export async function getCurrentUserProfile() {
 }
 
 // Helper to check if user has a specific role
-export async function hasRole(requiredRole: Database['public']['Enums']['user_role']) {
+export async function hasRole(requiredRole: string) {
   const profile = await getCurrentUserProfile();
   if (!profile) {
     return false;
   }
   
-  const roleHierarchy = {
+  const roleHierarchy: Record<string, number> = {
     'demo_viewer': 0,
     'instructor': 1,
     'operations_staff': 2,
     'owner': 3
   };
   
-  const userRoleLevel = roleHierarchy[profile.role] || 0;
+  const userRoleLevel = roleHierarchy[profile.role as keyof typeof roleHierarchy] || 0;
   const requiredRoleLevel = roleHierarchy[requiredRole] || 0;
   
   return userRoleLevel >= requiredRoleLevel;
