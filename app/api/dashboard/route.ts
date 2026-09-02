@@ -4,20 +4,16 @@ import { createClient } from '@supabase/supabase-js';
 export async function GET() {
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     
-    console.log('Supabase URL:', supabaseUrl ? 'present' : 'MISSING');
-    console.log('Service Role Key:', supabaseServiceKey ? 'present' : 'MISSING');
-    
-    if (!supabaseUrl || !supabaseServiceKey) {
-      console.error('Missing credentials:', { hasUrl: !!supabaseUrl, hasKey: !!supabaseServiceKey });
+    if (!supabaseUrl || !supabaseAnonKey) {
       return NextResponse.json(
-        { error: 'Missing Supabase credentials', hasUrl: !!supabaseUrl, hasKey: !!supabaseServiceKey },
+        { error: 'Missing Supabase credentials' },
         { status: 500 }
       );
     }
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
     
     const now = new Date();
     const startOfDay = new Date(now.setHours(0, 0, 0, 0));
