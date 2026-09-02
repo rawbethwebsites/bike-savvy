@@ -6,9 +6,13 @@ export async function GET() {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
     
+    console.log('Supabase URL:', supabaseUrl ? 'present' : 'MISSING');
+    console.log('Service Role Key:', supabaseServiceKey ? 'present' : 'MISSING');
+    
     if (!supabaseUrl || !supabaseServiceKey) {
+      console.error('Missing credentials:', { hasUrl: !!supabaseUrl, hasKey: !!supabaseServiceKey });
       return NextResponse.json(
-        { error: 'Missing Supabase credentials' },
+        { error: 'Missing Supabase credentials', hasUrl: !!supabaseUrl, hasKey: !!supabaseServiceKey },
         { status: 500 }
       );
     }
