@@ -88,9 +88,9 @@ export default function CalendarPage() {
       if (bookingsData) setBookings(bookingsData as unknown as Booking[]);
       if (instructorsData) setInstructors(instructorsData as unknown as Instructor[]);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load calendar data');
-      console.error('Calendar load error:', err);
-    } finally {
+          console.error('Calendar load error:', err);
+          setError(String(err));
+        } finally {
       setLoading(false);
     }
   }
