@@ -1,5 +1,7 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 
@@ -61,7 +63,7 @@ export default function CalendarPage() {
           location,
           customer:customers(first_name, last_name),
           course:courses(name),
-          instructor:instructors(full_name)
+          instructor:dashboard_users(full_name)
         `)
         .gte('start_time', startDate.toISOString())
         .lte('end_time', endDate.toISOString())
