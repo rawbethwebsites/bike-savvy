@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import LiveChatButton from '@/app/components/LiveChatButton';
 
 interface DashboardData {
   bookingsToday: number;
@@ -76,6 +77,7 @@ export default function TodayDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <LiveChatButton />
       {/* Header */}
       <header className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -110,6 +112,15 @@ export default function TodayDashboard() {
               >
                 Customers
               </Link>
+              <a
+                href="https://t.me/Bikesavvy_bot"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 inline-flex items-center gap-2"
+                title="Chat with Bike Savvy Assistant"
+              >
+                💬 Live Chat
+              </a>
               <div className="h-6 w-px bg-gray-300"></div>
               <button className="text-sm bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
                 New Booking
