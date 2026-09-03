@@ -2,6 +2,8 @@
 
 export const dynamic = 'force-dynamic';
 
+
+
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 
@@ -43,8 +45,10 @@ export default function CalendarPage() {
   async function loadData() {
     setLoading(true);
     setError(null);
+    const supabase = createClient();
+    setLoading(true);
+    setError(null);
     try {
-      const supabase = createClient();
 
       // Calculate date range based on view
       const startDate = getStartDate(currentDate, view);
