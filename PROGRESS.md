@@ -1,15 +1,18 @@
 # Bike Savvy Dashboard - Project Progress
 
-**Last Updated:** 3 September 2026, verified against production  
-**Current Phase:** Phase 2 - Live Dashboard Data Integration (in progress)  
-**Overall Status:** ~45% complete
+**Last Updated:** 3 September 2026, client homepage release
+**Current Phase:** Client-facing website + online booking request
+**Overall Status:** Sales-demo ready; production verification in progress
 
 > **Verified current state (3 September 2026):**
-> - Production is live at `https://bike-savvy.vercel.app/dashboard` (HTTP 200).
-> - Supabase schema and development access policies are in place.
-> - Seed data was successfully inserted: instructors, customers, resources, bookings and the four original courses.
-> - The production `/api/dashboard` endpoint returns live database data: 2 bookings today, 2 instructors working, R3,300 expected revenue, and 1 pending payment.
-> - The dashboard is connected to that endpoint. The tracker below contains older setup notes and should not be treated as the current blocker list.
+> - Production operations dashboard is live at `https://bike-savvy.vercel.app/dashboard` and uses live Supabase data.
+> - Internal bookings workspace is live at `/dashboard/bookings` with six database-backed booking records verified.
+> - A premium, responsive one-page customer homepage now replaces the stale setup placeholder at `/`.
+> - Homepage sections: cinematic hero, four training options, value proposition, three-step booking explanation, booking request form and final CTA.
+> - Public booking API added at `/api/public/bookings`: serves active courses and creates draft website requests with customer deduplication, future-date/business-hours checks, overlap prevention, consent validation and bot honeypot protection.
+> - New homepage/API files pass targeted ESLint and the complete Next.js production build passes.
+> - Local `.env.local` has a stale invalid anon key; Vercel production variables remain valid, as proven by the live `/api/dashboard` and `/api/bookings` responses.
+> - Next action: verify the Vercel deployment, confirm public courses load, exercise validation, and test one controlled booking request.
 
 ---
 

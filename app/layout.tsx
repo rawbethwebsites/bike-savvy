@@ -13,8 +13,14 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Bike Savvy Dashboard",
-  description: "Operations dashboard for Bike Savvy motorcycle training",
+  title: "Bike Savvy | Motorcycle Training in Cape Town",
+  description: "Practical, confidence-building motorcycle training in Cape Town. Choose your course and request your preferred lesson online.",
+  keywords: ["motorcycle training Cape Town", "motorbike lessons", "learner licence preparation", "riding lessons"],
+  openGraph: {
+    title: "Bike Savvy | Ride Ready. Road Confident.",
+    description: "Practical motorcycle training built around your experience, your pace and the road ahead.",
+    type: "website",
+  },
 };
 
 export default function RootLayout({
