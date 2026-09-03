@@ -16,6 +16,9 @@ export const metadata: Metadata = {
   title: "Bike Savvy | Motorcycle Training in Cape Town",
   description: "Practical, confidence-building motorcycle training in Cape Town. Choose your course and request your preferred lesson online.",
   keywords: ["motorcycle training Cape Town", "motorbike lessons", "learner licence preparation", "riding lessons"],
+  icons: {
+    icon: '/favicon.ico',
+  },
   openGraph: {
     title: "Bike Savvy | Ride Ready. Road Confident.",
     description: "Practical motorcycle training built around your experience, your pace and the road ahead.",
