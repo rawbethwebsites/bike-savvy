@@ -1,8 +1,15 @@
 # Bike Savvy Dashboard - Project Progress
 
-**Last Updated:** 2 September 2026, 20:15 SAST  
-**Current Phase:** Phase 2 - Dashboard Demo (in progress)  
-**Overall Status:** ~35% complete
+**Last Updated:** 3 September 2026, verified against production  
+**Current Phase:** Phase 2 - Live Dashboard Data Integration (in progress)  
+**Overall Status:** ~45% complete
+
+> **Verified current state (3 September 2026):**
+> - Production is live at `https://bike-savvy.vercel.app/dashboard` (HTTP 200).
+> - Supabase schema and development access policies are in place.
+> - Seed data was successfully inserted: instructors, customers, resources, bookings and the four original courses.
+> - The production `/api/dashboard` endpoint returns live database data: 2 bookings today, 2 instructors working, R3,300 expected revenue, and 1 pending payment.
+> - The dashboard is connected to that endpoint. The tracker below contains older setup notes and should not be treated as the current blocker list.
 
 ---
 
