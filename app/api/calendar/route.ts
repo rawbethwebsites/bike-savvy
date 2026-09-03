@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
     if (!supabaseUrl || !supabaseServiceRoleKey) {
       return NextResponse.json({ error: 'Missing Supabase credentials' }, { status: 500 });
     }
-    const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
+    const supabase = await createClient();
     const { data, error } = await supabase
       .from('bookings')
       .select(`
@@ -39,8 +39,9 @@ export async function GET(request: NextRequest) {
       .order('start_time', { ascending: true });
     if (error) throw error;
     return NextResponse.json({ data: data ?? [] });
-  } catch (error) {
-    console.error('Calendar API error:', error);
-    return NextResponse.json({ error: 'Failed to fetch calendar data' }, { status: 500 });
+  } catch (error: any) {
+      console.error('Calendar API error:', error);
+      const message = error?.message ?? String(error);
+      return NextResponse.json({ error: `Calendar API error: ${message}` }, { status: 500 });
   }
 }
