@@ -9,11 +9,12 @@ export async function GET() {
     const johannesburgDate = now.toLocaleDateString('en-CA', {
       timeZone: 'Africa/Johannesburg',
     });
+    // South Africa has no daylight-saving time; +02:00 is stable year-round.
     const startOfDay = new Date(`${johannesburgDate}T00:00:00+02:00`);
     const endOfDay = new Date(`${johannesburgDate}T23:59:59.999+02:00`);
 
     // Get today's bookings with related data
-    const { data: bookings, error: bookingsError } = await supabase
+    const { data: bookingsData, error: bookingsError } = await supabase
       .from('bookings')
       .select('*')
       .gte('start_time', startOfDay.toISOString())
@@ -21,6 +22,8 @@ export async function GET() {
       .in('status', ['confirmed', 'pending_payment', 'checked_in']);
 
     if (bookingsError) throw bookingsError;
+
+    const bookings = bookingsData as any[];
 
     if (!bookings || bookings.length === 0) {
       return NextResponse.json({
@@ -52,27 +55,34 @@ export async function GET() {
     sunday.setUTCDate(monday.getUTCDate() + 6);
     sunday.setUTCHours(23, 59, 59, 999);
 
-    for (const booking of bookings) {
+    for (const booking_ of bookings) {
+      const booking = booking_ as any;
       // Get customer
-      const { data: customer } = await supabase
+      const { data: customerData, error: customerError } = await supabase
         .from('customers')
         .select('first_name, last_name')
         .eq('id', booking.customer_id)
         .single();
+      if (customerError) throw customerError;
+      const customer = customerData;
 
       // Get course
-      const { data: course } = await supabase
+      const { data: courseData, error: courseError } = await supabase
         .from('courses')
         .select('name')
         .eq('id', booking.course_id)
         .single();
+      if (courseError) throw courseError;
+      const course = courseData;
 
       // Get instructor
-      const { data: instructor } = await supabase
+      const { data: instructorData, error: instructorError } = await supabase
         .from('instructors')
         .select('user_id')
         .eq('id', booking.instructor_id)
         .single();
+      if (instructorError) throw instructorError;
+      const instructor = instructorData;
 
       // dashboard_users stores a full_name (not a first_name).
       let instructorName = 'Unassigned';
@@ -119,7 +129,7 @@ export async function GET() {
     }
 
     // Weekly stats: fetch bookings for the week (Monday-Sunday) with status confirmed/pending_payment/checked_in
-    const { data: weekBookings, error: weekError } = await supabase
+    const { data: weekBookingsData, error: weekError } = await supabase
       .from('bookings')
       .select('price_cents')
       .gte('start_time', monday.toISOString())
@@ -128,7 +138,8 @@ export async function GET() {
 
     let bookingsThisWeek = 0;
     let revenueThisWeek = 0;
-    if (!weekError && weekBookings) {
+    if (!weekError && weekBookingsData) {
+      const weekBookings = weekBookingsData as any[];
       bookingsThisWeek = weekBookings.length;
       revenueThisWeek = weekBookings.reduce((sum, b) => sum + (b.price_cents || 0), 0);
     }
