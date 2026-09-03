@@ -30,6 +30,7 @@ export default function CalendarPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [instructors, setInstructors] = useState<Instructor[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
 
   const supabase = createClient();
@@ -41,43 +42,53 @@ export default function CalendarPage() {
 
   async function loadData() {
     setLoading(true);
+    setError(null);
     
-    // Calculate date range based on view
-    const startDate = getStartDate(currentDate, view);
-    const endDate = getEndDate(currentDate, view);
+    try {
+      // Calculate date range based on view
+      const startDate = getStartDate(currentDate, view);
+      const endDate = getEndDate(currentDate, view);
 
-    // Fetch bookings
-    const { data: bookingsData, error: bookingsError } = await supabase
-      .from('bookings')
-      .select(`
-        id,
-        booking_number,
-        start_time,
-        end_time,
-        status,
-        location,
-        customer:customers(first_name, last_name),
-        course:courses(name),
-        instructor:instructors(full_name)
-      `)
-      .gte('start_time', startDate.toISOString())
-      .lte('end_time', endDate.toISOString())
-      .in('status', ['confirmed', 'checked_in', 'held', 'pending_payment'])
-      .order('start_time', { ascending: true });
+      // Fetch bookings
+      const { data: bookingsData, error: bookingsError } = await supabase
+        .from('bookings')
+        .select(`
+          id,
+          booking_number,
+          start_time,
+          end_time,
+          status,
+          location,
+          customer:customers(first_name, last_name),
+          course:courses(name),
+          instructor:instructors(full_name)
+        `)
+        .gte('start_time', startDate.toISOString())
+        .lte('end_time', endDate.toISOString())
+        .in('status', ['confirmed', 'checked_in', 'held', 'pending_payment'])
+        .order('start_time', { ascending: true });
 
-    // Fetch instructors
-    const { data: instructorsData, error: instructorsError } = await supabase
-      .from('instructors')
-      .select(`
-        id,
-        full_name:dashboard_users(full_name)
-      `)
-      .eq('is_active', true);
+      if (bookingsError) throw bookingsError;
 
-    if (bookingsData) setBookings(bookingsData as unknown as Booking[]);
-    if (instructorsData) setInstructors(instructorsData as unknown as Instructor[]);
-    
-    setLoading(false);
+      // Fetch instructors
+      const { data: instructorsData, error: instructorsError } = await supabase
+        .from('instructors')
+        .select(`
+          id,
+          full_name:dashboard_users(full_name)
+        `)
+        .eq('is_active', true);
+
+      if (instructorsError) throw instructorsError;
+
+      if (bookingsData) setBookings(bookingsData as unknown as Booking[]);
+      if (instructorsData) setInstructors(instructorsData as unknown as Instructor[]);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load calendar data');
+      console.error('Calendar load error:', err);
+    } finally {
+      setLoading(false);
+    }
   }
 
   function getStartDate(date: Date, view: CalendarView) {
@@ -266,7 +277,18 @@ export default function CalendarPage() {
         </div>
 
         {/* Calendar Grid */}
-        {loading ? (
+        {error ? (
+          <div className="bg-white rounded-lg shadow p-12 text-center">
+            <p className="text-red-600 font-medium mb-4">Failed to load calendar</p>
+            <p className="text-gray-600 text-sm mb-4">{error}</p>
+            <button
+              onClick={() => loadData()}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+            >
+              Retry
+            </button>
+          </div>
+        ) : loading ? (
           <div className="bg-white rounded-lg shadow p-12 text-center">
             <p className="text-gray-500">Loading calendar...</p>
           </div>
