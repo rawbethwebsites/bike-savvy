@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '../../lib/supabase/server';
-import type { Database } from '../../lib/booking/types';
+import { createClient } from '@/lib/supabase/server';
+import type { Database } from '@/booking/types';
 
 export async function GET() {
   try {
