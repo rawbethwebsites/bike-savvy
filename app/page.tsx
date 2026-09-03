@@ -144,6 +144,7 @@ export default function Home() {
           <a href="#courses">Training</a>
           <a href="#why">Why Bike Savvy</a>
           <a href="#process">How it works</a>
+          <a href="/dashboard" style={{ opacity: 0.65 }}>Dashboard</a>
         </nav>
         <a className="nav-cta" href="#book">BOOK A LESSON <ArrowIcon /></a>
       </header>
