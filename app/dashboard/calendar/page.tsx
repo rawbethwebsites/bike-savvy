@@ -53,7 +53,7 @@ export default function CalendarPage() {
       // Fetch bookings
       const { data: bookingsData, error: bookingsError } = await supabase
         .from('bookings')
-        .select(`
+        .select(\`
           id,
           booking_number,
           start_time,
@@ -63,7 +63,7 @@ export default function CalendarPage() {
           customer:customers(first_name, last_name),
           course:courses(name),
           instructor:dashboard_users(full_name)
-        `)
+        \`)
         .gte('start_time', startDate.toISOString())
         .lte('end_time', endDate.toISOString())
         .in('status', ['confirmed', 'checked_in', 'held', 'pending_payment'])
@@ -74,10 +74,10 @@ export default function CalendarPage() {
       // Fetch instructors
       const { data: instructorsData, error: instructorsError } = await supabase
         .from('instructors')
-        .select(`
+        .select(\`
           id,
           full_name:dashboard_users(full_name)
-        `)
+        \`)
         .eq('is_active', true);
 
       if (instructorsError) throw instructorsError;
