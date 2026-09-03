@@ -2,8 +2,6 @@
 
 export const dynamic = 'force-dynamic';
 
-
-
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 
@@ -37,8 +35,6 @@ export default function CalendarPage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
 
-  const supabase = createClient();
-
   // Load bookings and instructors
   useEffect(() => {
     loadData();
@@ -47,8 +43,9 @@ export default function CalendarPage() {
   async function loadData() {
     setLoading(true);
     setError(null);
-    
     try {
+      const supabase = createClient();
+
       // Calculate date range based on view
       const startDate = getStartDate(currentDate, view);
       const endDate = getEndDate(currentDate, view);
@@ -88,9 +85,9 @@ export default function CalendarPage() {
       if (bookingsData) setBookings(bookingsData as unknown as Booking[]);
       if (instructorsData) setInstructors(instructorsData as unknown as Instructor[]);
     } catch (err) {
-          console.error('Calendar load error:', err);
-          setError(String(err));
-        } finally {
+      console.error('Calendar load error:', err);
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
       setLoading(false);
     }
   }
@@ -157,17 +154,17 @@ export default function CalendarPage() {
   }
 
   function formatTime(dateString: string) {
-    return new Date(dateString).toLocaleTimeString('en-ZA', { 
-      hour: '2-digit', 
+    return new Date(dateString).toLocaleTimeString('en-ZA', {
+      hour: '2-digit',
       minute: '2-digit',
-      hour12: true 
+      hour12: true
     });
   }
 
   function formatDate(date: Date) {
-    return date.toLocaleDateString('en-ZA', { 
-      weekday: 'short', 
-      day: 'numeric', 
+    return date.toLocaleDateString('en-ZA', {
+      weekday: 'short',
+      day: 'numeric',
       month: 'short',
       year: 'numeric'
     });
@@ -191,7 +188,7 @@ export default function CalendarPage() {
     const start = getStartDate(currentDate, view);
     const end = getEndDate(currentDate, view);
     const current = new Date(start);
-    
+
     while (current <= end) {
       dates.push(new Date(current));
       current.setDate(current.getDate() + 1);
@@ -308,6 +305,11 @@ export default function CalendarPage() {
                   <div key={i} className="p-3 border-r text-center bg-gray-50">
                     <div className="text-xs text-gray-500">
                       {date.toLocaleDateString('en-ZA', { weekday: 'short' })}
+
+
+<tool_call>
+<function=write_file>
+<parameter=content>
                     </div>
                     <div className="font-medium">
                       {date.toLocaleDateString('en-ZA', { day: 'numeric', month: 'short' })}
@@ -422,7 +424,7 @@ export default function CalendarPage() {
                   </div>
                   <div>
                     <label className="text-xs text-gray-500">End</label>
-                    <p className="font-medium">
+                  <p className="font-medium">
                       {new Date(selectedBooking.end_time).toLocaleDateString('en-ZA', {
                         hour: '2-digit',
                         minute: '2-digit'
