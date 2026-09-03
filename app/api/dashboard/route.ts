@@ -5,7 +5,7 @@ export async function GET() {
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    
+
     if (!supabaseUrl || !supabaseAnonKey) {
       return NextResponse.json(
         { error: 'Missing Supabase credentials' },
@@ -14,7 +14,7 @@ export async function GET() {
     }
 
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
-    
+
     const now = new Date();
     const johannesburgDate = now.toLocaleDateString('en-CA', {
       timeZone: 'Africa/Johannesburg',
@@ -39,6 +39,8 @@ export async function GET() {
         instructorsWorking: 0,
         expectedRevenue: 0,
         pendingPayments: 0,
+        bookingsThisWeek: 0,
+        revenueThisWeek: 0,
         schedule: [],
         issues: []
       });
@@ -50,6 +52,16 @@ export async function GET() {
     const instructorSet = new Set();
     let expectedRevenue = 0;
     let pendingPayments = 0;
+
+    // Week calculations: Monday to Sunday
+    const dayOfWeek = now.getUTCDay(); // 0 = Sunday, 1 = Monday, etc.
+    const offsetToMonday = ((dayOfWeek + 6) % 7) * -1; // days to subtract to get Monday
+    const monday = new Date(now);
+    monday.setUTCDate(now.getUTCDate() + offsetToMonday);
+    monday.setUTCHours(0, 0, 0, 0);
+    const sunday = new Date(monday);
+    sunday.setUTCDate(monday.getUTCDate() + 6);
+    sunday.setUTCHours(23, 59, 59, 999);
 
     for (const booking of bookings) {
       // Get customer
@@ -90,9 +102,9 @@ export async function GET() {
       // Add to schedule
       schedule.push({
         id: booking.id,
-        time: new Date(booking.start_time).toLocaleTimeString('en-ZA', { 
+        time: new Date(booking.start_time).toLocaleTimeString('en-ZA', {
           timeZone: 'Africa/Johannesburg',
-          hour: '2-digit', 
+          hour: '2-digit',
           minute: '2-digit',
           hour12: false,
         }),
@@ -117,6 +129,21 @@ export async function GET() {
       }
     }
 
+    // Weekly stats: fetch bookings for the week (Monday-Sunday) with status confirmed/pending_payment/checked_in
+    const { data: weekBookings, error: weekError } = await supabase
+      .from('bookings')
+      .select('price_cents')
+      .gte('start_time', monday.toISOString())
+      .lte('end_time', sunday.toISOString())
+      .in('status', ['confirmed', 'pending_payment', 'checked_in']);
+
+    let bookingsThisWeek = 0;
+    let revenueThisWeek = 0;
+    if (!weekError && weekBookings) {
+      bookingsThisWeek = weekBookings.length;
+      revenueThisWeek = weekBookings.reduce((sum, b) => sum + (b.price_cents || 0), 0);
+    }
+
     // Sort schedule by time
     schedule.sort((a, b) => a.time.localeCompare(b.time));
 
@@ -125,13 +152,17 @@ export async function GET() {
       instructorsWorking: instructorSet.size,
       expectedRevenue: Math.floor(expectedRevenue / 100),
       pendingPayments,
+      bookingsThisWeek,
+      revenueThisWeek: Math.floor(revenueThisWeek / 100),
       schedule,
       issues
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Dashboard API error:', error);
+    // Return error message (but limit length to avoid huge payloads)
+    const message = error?.message ?? String(error);
     return NextResponse.json(
-      { error: 'Failed to fetch dashboard data' },
+      { error: `Dashboard API error: ${message}` },
       { status: 500 }
     );
   }
