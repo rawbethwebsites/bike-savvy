@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { sendBookingNotification } from '@/lib/telegram/notifications';
 
 const ACTIVE_BOOKING_STATUSES = ['held', 'pending_payment', 'confirmed', 'checked_in'];
 const JOHANNESBURG_OFFSET = '+02:00';
@@ -118,7 +119,7 @@ export async function POST(request: NextRequest) {
     const [courseResult, ownerResult, customerLookup] = await Promise.all([
       supabase
         .from('courses')
-        .select('id, name, duration_minutes, price_cents')
+        .select('id, name, duration_minutes, price_cents, deposit_cents')
         .eq('id', courseId)
         .eq('is_active', true)
         .maybeSingle(),
@@ -196,6 +197,28 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (result.error) throw result.error;
+
+    try {
+      await sendBookingNotification({
+        bookingNumber: result.data.booking_number,
+        firstName,
+        lastName,
+        phone,
+        email: email || undefined,
+        courseName: courseResult.data.name,
+        startTime,
+        durationMinutes: courseResult.data.duration_minutes,
+        priceCents: courseResult.data.price_cents,
+        depositCents: courseResult.data.deposit_cents,
+        ridingLevel,
+        hasOwnMotorcycle,
+        notes: notes || undefined,
+      });
+    } catch (notificationError) {
+      // A Telegram outage must never discard an otherwise valid booking.
+      console.error('Telegram booking notification failed:', notificationError);
+    }
+
     return NextResponse.json(
       {
         reference: result.data.booking_number,
