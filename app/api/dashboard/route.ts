@@ -16,8 +16,12 @@ export async function GET() {
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
     
     const now = new Date();
-    const startOfDay = new Date(now.setHours(0, 0, 0, 0));
-    const endOfDay = new Date(now.setHours(23, 59, 59, 999));
+    const johannesburgDate = now.toLocaleDateString('en-CA', {
+      timeZone: 'Africa/Johannesburg',
+    });
+    // South Africa has no daylight-saving time; +02:00 is stable year-round.
+    const startOfDay = new Date(`${johannesburgDate}T00:00:00+02:00`);
+    const endOfDay = new Date(`${johannesburgDate}T23:59:59.999+02:00`);
 
     // Get today's bookings with related data
     const { data: bookings, error: bookingsError } = await supabase
@@ -69,15 +73,17 @@ export async function GET() {
         .eq('id', booking.instructor_id)
         .single();
 
-      // Get instructor name
-      let instructorName = 'Unknown';
+      // dashboard_users stores a full_name (not a first_name).
+      let instructorName = 'Unassigned';
       if (instructor?.user_id) {
-        const { data: user } = await supabase
+        const { data: user, error: userError } = await supabase
           .from('dashboard_users')
-          .select('first_name')
+          .select('full_name')
           .eq('id', instructor.user_id)
           .single();
-        instructorName = user?.first_name || 'Unknown';
+
+        if (userError) throw userError;
+        instructorName = user?.full_name || 'Unassigned';
         instructorSet.add(instructor.user_id);
       }
 
@@ -85,8 +91,10 @@ export async function GET() {
       schedule.push({
         id: booking.id,
         time: new Date(booking.start_time).toLocaleTimeString('en-ZA', { 
+          timeZone: 'Africa/Johannesburg',
           hour: '2-digit', 
-          minute: '2-digit' 
+          minute: '2-digit',
+          hour12: false,
         }),
         customer: customer ? `${customer.first_name} ${customer.last_name.charAt(0)}.` : 'Unknown',
         course: course?.name || 'Unknown Course',
