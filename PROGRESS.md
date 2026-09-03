@@ -5,7 +5,7 @@
 **Overall Status:** Sales-demo ready; production verification in progress
 
 > **Verified current state (3 September 2026):**
-> - Production operations dashboard is live at `https://bike-savvy.vercel.app/dashboard` and uses live Supabase data.
+> - Production operations dashboard is live at `https://bikesavvy.theboostnation.com/dashboard` and uses live Supabase data.
 > - Internal bookings workspace is live at `/dashboard/bookings` with six database-backed booking records verified.
 > - A premium, responsive one-page customer homepage now replaces the stale setup placeholder at `/`.
 > - Homepage sections: cinematic hero, four training options, value proposition, three-step booking explanation, booking request form and final CTA.

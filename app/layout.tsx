@@ -19,6 +19,7 @@ export const metadata: Metadata = {
   icons: {
     icon: '/favicon.ico',
   },
+  metadataBase: new URL('https://bikesavvy.theboostnation.com'),
   openGraph: {
     title: "Bike Savvy | Ride Ready. Road Confident.",
     description: "Practical motorcycle training built around your experience, your pace and the road ahead.",
