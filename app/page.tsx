@@ -48,9 +48,10 @@ const fallbackCourses = [
   { name: 'Licence Test Preparation', duration: '90 min', price: 'R1 500', copy: 'Focused preparation for your test, with clear correction and repetition.' },
 ];
 
-const courseCopy: Record<string, string> = Object.fromEntries(
-  fallbackCourses.map((course) => [course.name, course.copy]),
-);
+const courseCopy: Record<string, string> = {
+  ...Object.fromEntries(fallbackCourses.map((course) => [course.name, course.copy])),
+  'Learner License Preparation': 'Build the road knowledge and judgement your learner journey needs.',
+};
 
 function money(cents: number) {
   return new Intl.NumberFormat('en-ZA', { style: 'currency', currency: 'ZAR', maximumFractionDigits: 0 }).format(cents / 100);
