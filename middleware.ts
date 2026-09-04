@@ -4,9 +4,6 @@ import type { NextRequest } from 'next/server';
 // Routes that require authentication
 const protectedRoutes = ['/dashboard', '/api'];
 
-// Routes accessible only by owner role
-const ownerOnlyRoutes = ['/dashboard/settings', '/api/admin'];
-
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   

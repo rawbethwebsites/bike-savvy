@@ -5,7 +5,9 @@
  * All booking operations must pass through these checks before committing.
  */
 
-import { type Database } from './types';
+import type { SupabaseClient } from '@supabase/supabase-js';
+
+type BookingDatabaseClient = SupabaseClient;
 
 export type BookingStatus = 'draft' | 'held' | 'pending_payment' | 'confirmed' | 'checked_in' | 'completed' | 'cancelled' | 'no_show' | 'reschedule_required';
 export type BlockType = 'leave' | 'break' | 'maintenance' | 'closure' | 'manual_hold';
@@ -36,7 +38,7 @@ export interface Conflict {
 export interface Alternative {
   type: 'different_time' | 'different_instructor' | 'different_resource';
   description: string;
-  data: any;
+  data: unknown;
 }
 
 export interface BookingProposal {
@@ -68,7 +70,7 @@ export interface ValidationResult {
  * This is the core collision detection algorithm
  */
 export async function checkAvailability(
-  supabase: any, // Database client
+  supabase: BookingDatabaseClient, // Database client
   proposal: BookingProposal
 ): Promise<AvailabilityCheck> {
   const conflicts: Conflict[] = [];
@@ -118,7 +120,7 @@ export async function checkAvailability(
  * Check if instructor is available during the proposed time
  */
 async function checkInstructorAvailability(
-  supabase: any,
+  supabase: BookingDatabaseClient,
   proposal: BookingProposal
 ): Promise<{ isAvailable: boolean; conflict?: Conflict }> {
   if (!proposal.instructorId) {
@@ -188,7 +190,7 @@ async function checkInstructorAvailability(
  * Check if customer is available during the proposed time
  */
 async function checkCustomerAvailability(
-  supabase: any,
+  supabase: BookingDatabaseClient,
   proposal: BookingProposal
 ): Promise<{ isAvailable: boolean; conflict?: Conflict }> {
   const { data: overlappingBookings, error } = await supabase
@@ -227,7 +229,7 @@ async function checkCustomerAvailability(
  * Check if all required resources are available
  */
 async function checkResourcesAvailability(
-  supabase: any,
+  supabase: BookingDatabaseClient,
   proposal: BookingProposal
 ): Promise<{ areAllAvailable: boolean; conflicts: Conflict[] }> {
   const conflicts: Conflict[] = [];
@@ -249,7 +251,7 @@ async function checkResourcesAvailability(
       `);
     
     if (error || (overlapping && overlapping.length > 0)) {
-      const booking = overlapping?.[0]?.bookings;
+      const booking = overlapping?.[0]?.bookings?.[0];
       conflicts.push({
         type: 'resource',
         entityId: resourceId,
@@ -274,7 +276,7 @@ async function checkResourcesAvailability(
  * Check if the proposed time is within business hours
  */
 async function checkBusinessHours(
-  supabase: any,
+  supabase: BookingDatabaseClient,
   proposal: BookingProposal
 ): Promise<{ isWithinHours: boolean; conflict?: Conflict }> {
   if (!proposal.instructorId) {
@@ -338,7 +340,7 @@ async function checkBusinessHours(
  * Check if required buffers are respected
  */
 async function checkBuffers(
-  supabase: any,
+  supabase: BookingDatabaseClient,
   proposal: BookingProposal
 ): Promise<{ hasBuffers: boolean; conflict?: Conflict }> {
   if (!proposal.courseId) {
@@ -382,7 +384,7 @@ async function checkBuffers(
  * Calculate price breakdown for a booking
  */
 export async function calculatePrice(
-  supabase: any,
+  supabase: BookingDatabaseClient,
   proposal: BookingProposal
 ): Promise<{ basePrice: number; deposit: number; buffers: number; total: number }> {
   if (!proposal.courseId) {
@@ -411,7 +413,7 @@ export async function calculatePrice(
  * Validate a complete booking proposal
  */
 export async function validateBookingProposal(
-  supabase: any,
+  supabase: BookingDatabaseClient,
   proposal: BookingProposal
 ): Promise<ValidationResult> {
   const errors: string[] = [];

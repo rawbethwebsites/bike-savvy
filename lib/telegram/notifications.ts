@@ -1,5 +1,4 @@
 import { createClient } from '../../lib/supabase/server';
-import type { Database } from '../../lib/booking/types';
 
 type SendResult =
   | { sent: true }
@@ -23,11 +22,11 @@ export type BookingNotification = {
 
 function escapeHtml(value: string) {
   return value
-    .replace(/&/g, '&')
-    .replace(/</g, '<')
-    .replace(/>/g, '>')
-    .replace(/\"/g, '"')
-    .replace(/'/g, "'");
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 function formatCapeTownDate(date: Date) {
@@ -82,32 +81,38 @@ export async function sendBookingNotification(
   const token = process.env.TELEGRAM_BOT_TOKEN?.trim();
   if (!token) return { sent: false, reason: 'not_configured' };
 
-  const supabase = await createClient();
-  const { data: accounts, error } = await supabase
-    .from('telegram_accounts')
-    .select('telegram_user_id');
+  const explicitChatIds = [
+    process.env.TELEGRAM_NOTIFICATION_CHAT_ID?.trim(),
+    ...(process.env.TELEGRAM_EXTRA_CHAT_IDS?.split(',').map((id) => id.trim()) ?? []),
+  ].filter((id): id is string => Boolean(id));
 
-  let chatIds: string[] = [];
+  let linkedChatIds: string[] = [];
+  const canQueryLinkedAccounts = Boolean(
+    process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() &&
+      process.env.SUPABASE_SERVICE_ROLE_KEY?.trim(),
+  );
 
-  if (!error && accounts) {
-    chatIds = accounts.map((acc) => (acc as { telegram_user_id: number }).telegram_user_id.toString());
+  if (canQueryLinkedAccounts) {
+    try {
+      const supabase = await createClient();
+      const { data: accounts, error } = await supabase
+        .from('telegram_accounts')
+        .select('telegram_user_id');
+
+      if (!error && accounts) {
+        linkedChatIds = accounts.map((account) =>
+          (account as { telegram_user_id: number }).telegram_user_id.toString(),
+        );
+      }
+    } catch (error) {
+      // Explicit notification recipients remain usable if linked-account lookup is unavailable.
+      console.warn('Telegram linked-account lookup unavailable:', error);
+    }
   }
 
-  // Add extra IDs from env var
-  const extra = process.env.TELEGRAM_EXTRA_CHAT_IDS?.trim();
-  if (extra) {
-    const extraIds = extra
-      .split(',')
-      .map((id) => id.trim())
-      .filter((id) => id.length > 0);
-    chatIds = [...chatIds, ...extraIds];
-  }
-
-  // Fallback to single chat ID if none found
+  const chatIds = [...new Set([...linkedChatIds, ...explicitChatIds])];
   if (chatIds.length === 0) {
-    const chatId = process.env.TELEGRAM_NOTIFICATION_CHAT_ID?.trim();
-    if (!chatId) return { sent: false, reason: 'not_configured' };
-    chatIds.push(chatId);
+    return { sent: false, reason: 'not_configured' };
   }
 
   // Send to all accounts; log errors but do not fail the booking

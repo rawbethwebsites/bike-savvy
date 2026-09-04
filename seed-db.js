@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-disable @typescript-eslint/no-require-imports */
 // Seed script for Bike Savvy database
 // Run with: node seed-db.js
 

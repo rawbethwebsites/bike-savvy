@@ -1,5 +1,23 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import type { PostgrestError } from '@supabase/supabase-js';
+
+type DashboardBooking = {
+  id: string;
+  customer_id: string;
+  course_id: string;
+  instructor_id: string | null;
+  start_time: string;
+  status: string;
+  price_cents: number | null;
+  payment_status: string;
+};
+
+type CustomerSummary = { first_name: string; last_name: string };
+type CourseSummary = { name: string };
+type InstructorSummary = { user_id: string };
+type UserSummary = { full_name: string };
+type PriceSummary = { price_cents: number | null };
 
 export async function GET() {
   try {
@@ -33,7 +51,7 @@ export async function GET() {
 
     if (bookingsError) throw bookingsError;
 
-    const bookings = bookingsData as any[];
+    const bookings = (bookingsData ?? []) as unknown as DashboardBooking[];
 
     if (!bookings || bookings.length === 0) {
       return NextResponse.json({
@@ -71,21 +89,21 @@ export async function GET() {
         .from('customers')
         .select('first_name, last_name')
         .eq('id', booking.customer_id)
-        .single() as { data: any };
+        .single() as unknown as { data: CustomerSummary | null };
 
       // Get course
       const { data: course } = await supabase
         .from('courses')
         .select('name')
         .eq('id', booking.course_id)
-        .single() as { data: any };
+        .single() as unknown as { data: CourseSummary | null };
 
       // Get instructor
       const { data: instructor } = await supabase
         .from('instructors')
         .select('user_id')
         .eq('id', booking.instructor_id)
-        .single() as { data: any };
+        .single() as unknown as { data: InstructorSummary | null };
 
       // dashboard_users stores a full_name (not a first_name).
       let instructorName = 'Unassigned';
@@ -94,7 +112,7 @@ export async function GET() {
           .from('dashboard_users')
           .select('full_name')
           .eq('id', instructor.user_id)
-          .single() as { data: any, error: any };
+          .single() as unknown as { data: UserSummary | null; error: PostgrestError | null };
 
         if (userError) throw userError;
         instructorName = user?.full_name || 'Unassigned';
@@ -139,7 +157,7 @@ export async function GET() {
       .lte('end_time', sunday.toISOString())
       .in('status', ['confirmed', 'pending_payment', 'checked_in']);
 
-    const weekBookings = weekBookingsData as any[];
+    const weekBookings = (weekBookingsData ?? []) as unknown as PriceSummary[];
 
     let bookingsThisWeek = 0;
     let revenueThisWeek = 0;
@@ -161,9 +179,9 @@ export async function GET() {
       schedule,
       issues
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Dashboard API error:', error);
-    const message = error?.message ?? String(error);
+    const message = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
       { error: `Dashboard API error: ${message}` },
       { status: 500 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 
@@ -15,17 +15,22 @@ interface Customer {
   status: 'active' | 'inactive';
 }
 
+interface CustomerQueryRow {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email: string | null;
+  phone: string | null;
+  bookings: Array<{ count: number }> | null;
+}
+
 export default function CustomersPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState<'all' | 'active' | 'inactive'>('all');
 
-  useEffect(() => {
-    loadCustomers();
-  }, []);
-
-  async function loadCustomers() {
+  const loadCustomers = useCallback(async () => {
     try {
       const supabase = createClient();
       
@@ -45,7 +50,7 @@ export default function CustomersPage() {
       if (error) throw error;
 
       // Transform data
-      const transformed: Customer[] = (data || []).map((customer: any) => ({
+      const transformed: Customer[] = ((data || []) as CustomerQueryRow[]).map((customer) => ({
         id: customer.id,
         first_name: customer.first_name,
         last_name: customer.last_name,
@@ -62,7 +67,13 @@ export default function CustomersPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
+
+  useEffect(() => {
+    // Loading remote customer data is this effect's synchronization boundary.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadCustomers();
+  }, [loadCustomers]);
 
   const filteredCustomers = customers.filter(customer => {
     const matchesSearch = 

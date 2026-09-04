@@ -575,8 +575,8 @@ export interface Database {
         }
       }
     }
-    Views: {}
-    Functions: {}
+    Views: Record<string, never>
+    Functions: Record<string, never>
     Enums: {
       user_role: user_role
       booking_status: booking_status
