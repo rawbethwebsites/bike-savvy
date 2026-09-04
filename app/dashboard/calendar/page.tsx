@@ -291,10 +291,10 @@ export default function CalendarPage() {
                 {getDatesInRange().map((date, i) => (
                   <div key={i} className="p-3 border-r text-center bg-gray-50">
                     <div className="text-xs text-gray-500">
-                      {date.toLocaleDateString('en-ZA', { weekday: 'short' })
+                      {date.toLocaleDateString('en-ZA', { weekday: 'short' })}
                     </div>
                     <div className="font-medium">
-                      {date.toLocaleDateString('en-ZA', { day: 'numeric', month: 'short' })
+                      {date.toLocaleDateString('en-ZA', { day: 'numeric', month: 'short' })}
                     </div>
                   </div>
                 ))}
