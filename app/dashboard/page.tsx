@@ -78,55 +78,17 @@ export default function TodayDashboard() {
   return (
     <div className="min-h-screen bg-gray-50">
       <LiveChatButton />
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Bike Savvy Dashboard</h1>
-              <p className="text-sm text-gray-500 mt-1">
-                {new Date().toLocaleDateString('en-ZA', { 
-                  weekday: 'long', 
-                  year: 'numeric', 
-                  month: 'long', 
-                  day: 'numeric' 
-                })}
-              </p>
-            </div>
-            <div className="flex items-center gap-4">
-              <Link
-                href="/dashboard/calendar"
-                className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-              >
-                Calendar
-              </Link>
-              <Link
-                href="/dashboard/bookings"
-                className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-              >
-                Bookings
-              </Link>
-              <Link
-                href="/dashboard/customers"
-                className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-              >
-                Customers
-              </Link>
-              <a
-                href="https://t.me/Bikesavvy_bot"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 inline-flex items-center gap-2"
-                title="Chat with Bike Savvy Assistant"
-              >
-                💬 Live Chat
-              </a>
-              <div className="h-6 w-px bg-gray-300"></div>
-              <button className="text-sm bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
-                New Booking
-              </button>
-            </div>
-          </div>
+      <header className="border-b border-gray-200 bg-white">
+        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+          <h1 className="text-2xl font-bold text-gray-900">Dashboard overview</h1>
+          <p className="mt-1 text-sm text-gray-500">
+            {new Date().toLocaleDateString('en-ZA', {
+              weekday: 'long',
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+            })}
+          </p>
         </div>
       </header>
 
@@ -162,7 +124,7 @@ export default function TodayDashboard() {
           <div className="lg:col-span-2 bg-white rounded-lg shadow">
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-gray-900">Today's Schedule</h2>
+                <h2 className="text-lg font-semibold text-gray-900">Today&apos;s Schedule</h2>
                 <Link
                   href="/dashboard/calendar"
                   className="text-sm text-blue-600 hover:text-blue-700"
