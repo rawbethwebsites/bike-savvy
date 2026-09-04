@@ -1,10 +1,19 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
-import type { Database } from '@/lib/booking/types';
+import { createClient } from '@supabase/supabase-js';
 
 export async function GET() {
   try {
-    const supabase = await createClient();
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseAnonKey) {
+      throw new Error('Missing Supabase dashboard environment variables');
+    }
+
+    // Dashboard reads use the publishable key and the project's read-only RLS policies.
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
     const now = new Date();
     const johannesburgDate = now.toLocaleDateString('en-CA', {
       timeZone: 'Africa/Johannesburg',
@@ -16,17 +25,7 @@ export async function GET() {
     // Get today's bookings with related data
     const { data: bookingsData, error: bookingsError } = await supabase
       .from('bookings')
-      .select(`
-        id,
-        booking_number,
-        start_time,
-        end_time,
-        status,
-        location,
-        customer:customers(first_name, last_name),
-        course:courses(name),
-        instructor:dashboard_users(full_name)
-      `)
+      .select('*')
       .gte('start_time', startOfDay.toISOString())
       .lte('end_time', endOfDay.toISOString())
       .in('status', ['confirmed', 'pending_payment', 'checked_in'])
