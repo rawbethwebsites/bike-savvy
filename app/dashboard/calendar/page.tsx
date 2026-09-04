@@ -66,7 +66,7 @@ export default function CalendarPage() {
       for (const booking of data) {
         if (booking.instructor && booking.instructor.full_name) {
           instructorSet.add(booking.instructor.full_name);
-          instructorMap.set(booking.instructor.full_name, { id: booking.instructor.id || '', full_name: booking.instructor.full_name });
+          instructorMap.set(booking.instructor.full_name, { id: booking.instructor.full_name, full_name: booking.instructor.full_name });
         }
       }
       setInstructors(Array.from(instructorMap.values()));
@@ -401,7 +401,7 @@ export default function CalendarPage() {
                       month: 'short',
                       hour: '2-digit',
                       minute: '2-digit'
-                    })
+                    })}
                   </p>
                   </div>
                   <div>
@@ -410,7 +410,7 @@ export default function CalendarPage() {
                     {new Date(selectedBooking.end_time).toLocaleDateString('en-ZA', {
                       hour: '2-digit',
                       minute: '2-digit'
-                    })
+                    })}
                   </p>
                   </div>
                 </div>
