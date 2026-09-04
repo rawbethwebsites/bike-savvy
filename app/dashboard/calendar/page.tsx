@@ -2,7 +2,9 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import Link from 'next/link';
+import { isBookingInInstructorLane } from '@/lib/calendar';
 
 type CalendarView = 'day' | 'week' | 'month';
 type ViewMode = 'instructor' | 'resource';
@@ -12,7 +14,7 @@ interface Booking {
   booking_number: string;
   customer: { first_name: string; last_name: string };
   course: { name: string };
-  instructor: { full_name: string } | null;
+  instructor: { id: string; full_name: string } | null;
   start_time: string;
   end_time: string;
   status: string;
@@ -34,49 +36,37 @@ export default function CalendarPage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
 
-  // Load bookings and instructors
-  useEffect(() => {
-    loadData();
-  }, [currentDate, view]);
-
-  async function loadData() {
+  const loadData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      // Calculate date range based on view
       const startDate = getStartDate(currentDate, view);
       const endDate = getEndDate(currentDate, view);
-      // Format as ISO strings for API
-      const startISO = startDate.toISOString();
-      const endISO = endDate.toISOString();
-      const response = await fetch(`/api/calendar?start=${encodeURIComponent(startISO)}&end=${encodeURIComponent(endISO)}`);
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Failed to fetch calendar data: ${errorText}`);
-      }
+      const response = await fetch(
+        `/api/calendar?start=${encodeURIComponent(startDate.toISOString())}&end=${encodeURIComponent(endDate.toISOString())}`,
+        { cache: 'no-store' },
+      );
       const json = await response.json();
-      if (json.error) {
-        throw new Error(json.error);
+
+      if (!response.ok || json.error) {
+        throw new Error(json.error || 'Failed to fetch calendar data');
       }
-      const data = json.data as Booking[] || [];
-      setBookings(data);
-      // Extract unique instructors from bookings
-      const instructorSet = new Set<string>();
-      const instructorMap = new Map<string, Instructor>();
-      for (const booking of data) {
-        if (booking.instructor && booking.instructor.full_name) {
-          instructorSet.add(booking.instructor.full_name);
-          instructorMap.set(booking.instructor.full_name, { id: booking.instructor.full_name, full_name: booking.instructor.full_name });
-        }
-      }
-      setInstructors(Array.from(instructorMap.values()));
+
+      setBookings((json.data as Booking[]) ?? []);
+      setInstructors((json.instructors as Instructor[]) ?? []);
     } catch (err) {
       console.error('Calendar load error:', err);
       setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
     }
-  }
+  }, [currentDate, view]);
+
+  useEffect(() => {
+    // Loading remote calendar data is the effect's synchronization boundary.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadData();
+  }, [loadData]);
 
   function getStartDate(date: Date, view: CalendarView) {
     const d = new Date(date);
@@ -141,6 +131,7 @@ export default function CalendarPage() {
 
   function formatTime(dateString: string) {
     return new Date(dateString).toLocaleTimeString('en-ZA', {
+      timeZone: 'Africa/Johannesburg',
       hour: '2-digit',
       minute: '2-digit',
       hour12: true
@@ -157,25 +148,16 @@ export default function CalendarPage() {
   }
 
   function getBookingsForInstructor(instructorId: string, date: Date) {
-    const startOfDay = new Date(date);
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(date);
-    endOfDay.setHours(23, 59, 59, 999);
-
-    return bookings.filter(booking => {
-      const bookingStart = new Date(booking.start_time);
-      // Since we don't have instructor ID in the filtered list, we match by full name? 
-      // For simplicity, we'll just return all bookings for now and let the UI handle it.
-      // In a real app, we would have instructor ID in the booking object.
-      return bookingStart >= startOfDay && bookingStart <= endOfDay;
-    });
+    return bookings.filter((booking) =>
+      isBookingInInstructorLane(booking, instructorId, date),
+    );
   }
 
   function getDatesInRange() {
     const dates = [];
     const start = getStartDate(currentDate, view);
     const end = getEndDate(currentDate, view);
-    let current = new Date(start);
+    const current = new Date(start);
     while (current <= end) {
       dates.push(new Date(current));
       current.setDate(current.getDate() + 1);
@@ -184,34 +166,41 @@ export default function CalendarPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gray-50 p-4 sm:p-6">
+      <div className="mx-auto max-w-7xl">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Calendar</h1>
             <p className="text-gray-600 mt-1">View and manage bookings across instructors</p>
           </div>
-          <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-            + New Booking
-          </button>
+          <Link
+            href="/dashboard/bookings"
+            className="inline-flex min-h-11 items-center rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
+          >
+            New Booking
+          </Link>
         </div>
 
         {/* Controls */}
-        <div className="flex items-center gap-4 mb-6 bg-white p-4 rounded-lg shadow">
+        <div className="mb-6 flex flex-wrap items-center gap-3 rounded-lg border border-gray-200 bg-white p-3 shadow-sm sm:gap-4 sm:p-4">
           <div className="flex items-center gap-2">
             <button
+              type="button"
+              aria-label={`Previous ${view}`}
               onClick={() => navigate('prev')}
-              className="p-2 hover:bg-gray-100 rounded"
+              className="grid min-h-11 min-w-11 place-items-center rounded hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
             >
               ←
             </button>
-            <span className="font-medium min-w-[200px] text-center">
-              {formatDate(getStartDate(currentDate, view))} - {formatDate(getEndDate(currentDate, view))}
+            <span className="min-w-[170px] text-center text-sm font-medium sm:min-w-[240px]">
+              {formatDate(getStartDate(currentDate, view))} – {formatDate(getEndDate(currentDate, view))}
             </span>
             <button
+              type="button"
+              aria-label={`Next ${view}`}
               onClick={() => navigate('next')}
-              className="p-2 hover:bg-gray-100 rounded"
+              className="grid min-h-11 min-w-11 place-items-center rounded hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
             >
               →
             </button>
@@ -281,7 +270,8 @@ export default function CalendarPage() {
             <p className="text-gray-500">Loading calendar...</p>
           </div>
         ) : viewMode === 'instructor' ? (
-          <div className="bg-white rounded-lg shadow overflow-hidden">
+          <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm">
+            <div style={{ minWidth: `${200 + getDatesInRange().length * 150}px` }}>
             {/* Header Row */}
             <div className="grid grid-cols-[200px_1fr] border-b">
               <div className="p-4 border-r bg-gray-50 font-medium text-gray-700">
@@ -351,6 +341,7 @@ export default function CalendarPage() {
                 No instructors found. Add instructors in the dashboard settings.
               </div>
             )}
+            </div>
           </div>
         ) : (
           <div className="bg-white rounded-lg shadow p-12 text-center">
@@ -365,10 +356,14 @@ export default function CalendarPage() {
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold">Booking Details</h3>
                 <button
+                  type="button"
+                  aria-label="Close booking details"
                   onClick={() => setSelectedBooking(null)}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="grid min-h-11 min-w-11 place-items-center rounded text-gray-500 hover:bg-gray-100 hover:text-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
                 >
-                  ✕
+                  <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M6 6l12 12M18 6L6 18" />
+                  </svg>
                 </button>
               </div>
 
@@ -396,6 +391,7 @@ export default function CalendarPage() {
                     <label className="text-xs text-gray-500">Start</label>
                   <p className="font-medium">
                     {new Date(selectedBooking.start_time).toLocaleDateString('en-ZA', {
+                      timeZone: 'Africa/Johannesburg',
                       weekday: 'short',
                       day: 'numeric',
                       month: 'short',
@@ -408,6 +404,7 @@ export default function CalendarPage() {
                   <label className="text-xs text-gray-500">End</label>
                   <p className="font-medium">
                     {new Date(selectedBooking.end_time).toLocaleDateString('en-ZA', {
+                      timeZone: 'Africa/Johannesburg',
                       hour: '2-digit',
                       minute: '2-digit'
                     })}
@@ -423,11 +420,18 @@ export default function CalendarPage() {
               </div>
 
               <div className="mt-6 flex gap-2">
-                <button className="flex-1 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-                  Reschedule
-                </button>
-                <button className="flex-1 border border-gray-300 px-4 py-2 rounded hover:bg-gray-50">
-                  Cancel
+                <Link
+                  href="/dashboard/bookings"
+                  className="inline-flex min-h-11 flex-1 items-center justify-center rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
+                >
+                  Open bookings
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => setSelectedBooking(null)}
+                  className="min-h-11 flex-1 rounded border border-gray-300 px-4 py-2 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+                >
+                  Close
                 </button>
               </div>
             </div>
