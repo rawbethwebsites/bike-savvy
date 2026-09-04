@@ -16,10 +16,21 @@ export async function GET() {
     // Get today's bookings with related data
     const { data: bookingsData, error: bookingsError } = await supabase
       .from('bookings')
-      .select('*')
+      .select(`
+        id,
+        booking_number,
+        start_time,
+        end_time,
+        status,
+        location,
+        customer:customers(first_name, last_name),
+        course:courses(name),
+        instructor:dashboard_users(full_name)
+      `)
       .gte('start_time', startOfDay.toISOString())
       .lte('end_time', endOfDay.toISOString())
-      .in('status', ['confirmed', 'pending_payment', 'checked_in']);
+      .in('status', ['confirmed', 'pending_payment', 'checked_in'])
+      .order('start_time', { ascending: true });
 
     if (bookingsError) throw bookingsError;
 
@@ -55,34 +66,27 @@ export async function GET() {
     sunday.setUTCDate(monday.getUTCDate() + 6);
     sunday.setUTCHours(23, 59, 59, 999);
 
-    for (const booking_ of bookings) {
-      const booking = booking_ as any;
+    for (const booking of bookings) {
       // Get customer
-      const { data: customerData, error: customerError } = await supabase
+      const { data: customer } = await supabase
         .from('customers')
         .select('first_name, last_name')
         .eq('id', booking.customer_id)
-        .single();
-      if (customerError) throw customerError;
-      const customer = customerData;
+        .single() as { data: any };
 
       // Get course
-      const { data: courseData, error: courseError } = await supabase
+      const { data: course } = await supabase
         .from('courses')
         .select('name')
         .eq('id', booking.course_id)
-        .single();
-      if (courseError) throw courseError;
-      const course = courseData;
+        .single() as { data: any };
 
       // Get instructor
-      const { data: instructorData, error: instructorError } = await supabase
+      const { data: instructor } = await supabase
         .from('instructors')
         .select('user_id')
         .eq('id', booking.instructor_id)
-        .single();
-      if (instructorError) throw instructorError;
-      const instructor = instructorData;
+        .single() as { data: any };
 
       // dashboard_users stores a full_name (not a first_name).
       let instructorName = 'Unassigned';
@@ -91,7 +95,7 @@ export async function GET() {
           .from('dashboard_users')
           .select('full_name')
           .eq('id', instructor.user_id)
-          .single();
+          .single() as { data: any, error: any };
 
         if (userError) throw userError;
         instructorName = user?.full_name || 'Unassigned';
@@ -136,10 +140,11 @@ export async function GET() {
       .lte('end_time', sunday.toISOString())
       .in('status', ['confirmed', 'pending_payment', 'checked_in']);
 
+    const weekBookings = weekBookingsData as any[];
+
     let bookingsThisWeek = 0;
     let revenueThisWeek = 0;
-    if (!weekError && weekBookingsData) {
-      const weekBookings = weekBookingsData as any[];
+    if (!weekError && weekBookings) {
       bookingsThisWeek = weekBookings.length;
       revenueThisWeek = weekBookings.reduce((sum, b) => sum + (b.price_cents || 0), 0);
     }
