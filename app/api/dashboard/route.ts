@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import type { PostgrestError } from '@supabase/supabase-js';
+import { summarizeWeeklyBookings } from '@/lib/dashboard-metrics';
 
 type DashboardBooking = {
   id: string;
@@ -53,16 +54,38 @@ export async function GET() {
 
     const bookings = (bookingsData ?? []) as unknown as DashboardBooking[];
 
-    if (!bookings || bookings.length === 0) {
+    // Weekly totals must be calculated even when today has no bookings.
+    const dayOfWeek = now.getUTCDay();
+    const offsetToMonday = ((dayOfWeek + 6) % 7) * -1;
+    const monday = new Date(now);
+    monday.setUTCDate(now.getUTCDate() + offsetToMonday);
+    monday.setUTCHours(0, 0, 0, 0);
+    const sunday = new Date(monday);
+    sunday.setUTCDate(monday.getUTCDate() + 6);
+    sunday.setUTCHours(23, 59, 59, 999);
+
+    const { data: weekBookingsData, error: weekError } = await supabase
+      .from('bookings')
+      .select('price_cents')
+      .gte('start_time', monday.toISOString())
+      .lte('end_time', sunday.toISOString())
+      .in('status', ['confirmed', 'pending_payment', 'checked_in']);
+
+    if (weekError) throw weekError;
+
+    const weeklyTotals = summarizeWeeklyBookings(
+      (weekBookingsData ?? []) as unknown as PriceSummary[],
+    );
+
+    if (bookings.length === 0) {
       return NextResponse.json({
         bookingsToday: 0,
         instructorsWorking: 0,
         expectedRevenue: 0,
         pendingPayments: 0,
-        bookingsThisWeek: 0,
-        revenueThisWeek: 0,
+        ...weeklyTotals,
         schedule: [],
-        issues: []
+        issues: [],
       });
     }
 
@@ -72,16 +95,6 @@ export async function GET() {
     const instructorSet = new Set();
     let expectedRevenue = 0;
     let pendingPayments = 0;
-
-    // Week calculations: Monday to Sunday
-    const dayOfWeek = now.getUTCDay(); // 0 = Sunday, 1 = Monday, etc.
-    const offsetToMonday = ((dayOfWeek + 6) % 7) * -1; // days to subtract to get Monday
-    const monday = new Date(now);
-    monday.setUTCDate(now.getUTCDate() + offsetToMonday);
-    monday.setUTCHours(0, 0, 0, 0);
-    const sunday = new Date(monday);
-    sunday.setUTCDate(monday.getUTCDate() + 6);
-    sunday.setUTCHours(23, 59, 59, 999);
 
     for (const booking of bookings) {
       // Get customer
@@ -149,23 +162,6 @@ export async function GET() {
       }
     }
 
-    // Weekly stats: fetch bookings for the week (Monday-Sunday) with status confirmed/pending_payment/checked_in
-    const { data: weekBookingsData, error: weekError } = await supabase
-      .from('bookings')
-      .select('price_cents')
-      .gte('start_time', monday.toISOString())
-      .lte('end_time', sunday.toISOString())
-      .in('status', ['confirmed', 'pending_payment', 'checked_in']);
-
-    const weekBookings = (weekBookingsData ?? []) as unknown as PriceSummary[];
-
-    let bookingsThisWeek = 0;
-    let revenueThisWeek = 0;
-    if (!weekError && weekBookings) {
-      bookingsThisWeek = weekBookings.length;
-      revenueThisWeek = weekBookings.reduce((sum, b) => sum + (b.price_cents || 0), 0);
-    }
-
     // Sort schedule by time
     schedule.sort((a, b) => a.time.localeCompare(b.time));
 
@@ -174,10 +170,9 @@ export async function GET() {
       instructorsWorking: instructorSet.size,
       expectedRevenue: Math.floor(expectedRevenue / 100),
       pendingPayments,
-      bookingsThisWeek,
-      revenueThisWeek: Math.floor(revenueThisWeek / 100),
+      ...weeklyTotals,
       schedule,
-      issues
+      issues,
     });
   } catch (error: unknown) {
     console.error('Dashboard API error:', error);
