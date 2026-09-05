@@ -1,14 +1,21 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import LiveChatButton from '@/app/components/LiveChatButton';
+import {
+  formatDashboardDate,
+  formatRand,
+  humanizeDashboardStatus,
+} from '@/lib/dashboard-home';
 
 interface DashboardData {
   bookingsToday: number;
   instructorsWorking: number;
   expectedRevenue: number;
   pendingPayments: number;
+  bookingsThisWeek: number;
+  revenueThisWeek: number;
   schedule: Array<{
     id: string;
     time: string;
@@ -25,270 +32,225 @@ interface DashboardData {
   }>;
 }
 
+const statusStyles: Record<string, string> = {
+  confirmed: 'border-[#75d69c]/25 bg-[#75d69c]/10 text-[#9ce6b8]',
+  pending_payment: 'border-[#f4c95d]/25 bg-[#f4c95d]/10 text-[#f4d77d]',
+  checked_in: 'border-[#8ab4f8]/25 bg-[#8ab4f8]/10 text-[#a9c9ff]',
+  completed: 'border-white/10 bg-white/5 text-[#bdc3bd]',
+  cancelled: 'border-[#ff7b72]/25 bg-[#ff7b72]/10 text-[#ff9d96]',
+};
+
 export default function TodayDashboard() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function fetchDashboard() {
-      try {
-        const res = await fetch('/api/dashboard');
-        if (!res.ok) throw new Error('Failed to fetch dashboard data');
-        const jsonData = await res.json();
-        setData(jsonData);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Unknown error');
-      } finally {
-        setIsLoading(false);
-      }
-    }
+  async function fetchDashboard() {
+    setIsLoading(true);
+    setError(null);
 
-    fetchDashboard();
+    try {
+      const response = await fetch('/api/dashboard', { cache: 'no-store' });
+      const payload = (await response.json()) as DashboardData & { error?: string };
+      if (!response.ok) throw new Error(payload.error ?? 'Unable to load dashboard data.');
+      setData(payload);
+    } catch (caughtError) {
+      setError(caughtError instanceof Error ? caughtError.message : 'Unable to load dashboard data.');
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => void fetchDashboard(), 0);
+    return () => window.clearTimeout(timer);
   }, []);
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading dashboard...</p>
-        </div>
-      </div>
-    );
-  }
+  if (isLoading) return <DashboardSkeleton />;
 
   if (error || !data) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-red-600 font-semibold">Error loading dashboard</p>
-          <p className="text-gray-600 mt-2">{error || 'Unknown error'}</p>
-          <button 
-            onClick={() => window.location.reload()}
-            className="mt-4 text-blue-600 hover:underline"
-          >
-            Retry
-          </button>
+      <div className="min-h-[calc(100dvh-4rem)] bg-[#0b0d0c] p-4 sm:p-6 lg:p-8">
+        <div className="mx-auto flex min-h-[55dvh] max-w-7xl items-center justify-center">
+          <div className="w-full max-w-md rounded-xl border border-[#ff7b72]/25 bg-[#191c19] p-6 text-center">
+            <ErrorIcon />
+            <h1 className="mt-4 text-xl font-semibold text-[#f4f6f2]">Dashboard unavailable</h1>
+            <p className="mt-2 text-sm leading-6 text-[#9ba39b]">{error ?? 'The dashboard could not be loaded.'}</p>
+            <button
+              type="button"
+              onClick={() => void fetchDashboard()}
+              className="mt-5 min-h-11 rounded-lg bg-[#c9ff32] px-5 text-sm font-semibold text-[#0b0d0c] hover:bg-[#dcff78] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c9ff32] focus-visible:ring-offset-2 focus-visible:ring-offset-[#191c19]"
+            >
+              Try again
+            </button>
+          </div>
         </div>
       </div>
     );
   }
 
+  const nextBooking = data.schedule[0];
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-[calc(100dvh-4rem)] overflow-x-hidden bg-[#0b0d0c] px-4 py-6 text-[#f4f6f2] sm:px-6 lg:px-8 lg:py-8">
       <LiveChatButton />
-      <header className="border-b border-gray-200 bg-white">
-        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-          <h1 className="text-2xl font-bold text-gray-900">Dashboard overview</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            {new Date().toLocaleDateString('en-ZA', {
-              weekday: 'long',
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-            })}
-          </p>
-        </div>
-      </header>
+      <div className="mx-auto max-w-[1440px]">
+        <header className="mb-6 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#9ba39b]">
+              {formatDashboardDate(new Date())}
+            </p>
+            <h1 className="mt-1 text-[28px] font-semibold tracking-[-0.035em] text-[#f4f6f2]">
+              Today&apos;s operations
+            </h1>
+            <p className="mt-1 text-sm text-[#9ba39b]">Priorities, lessons and revenue in one live view.</p>
+          </div>
+          <div className="grid grid-cols-1 gap-2 min-[480px]:grid-cols-2 sm:flex">
+            <Link href="/dashboard/calendar" className="inline-flex min-h-11 items-center justify-center rounded-lg border border-white/10 bg-[#191c19] px-4 text-sm font-semibold text-[#d7dcd7] transition-colors hover:bg-[#222622] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c9ff32]">
+              View calendar
+            </Link>
+            <Link href="/dashboard/bookings" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[#c9ff32] px-4 text-sm font-semibold text-[#0b0d0c] transition-colors hover:bg-[#dcff78] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c9ff32] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b0d0c]">
+              <PlusIcon />
+              Bookings
+            </Link>
+          </div>
+        </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* KPI Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <KpiCard
-            title="Bookings Today"
-            value={data.bookingsToday.toString()}
-            trend={data.bookingsToday > 0 ? `${data.schedule.length} scheduled` : 'No bookings'}
-            trendUp={data.bookingsToday > 0}
-          />
-          <KpiCard
-            title="Instructors Working"
-            value={data.instructorsWorking.toString()}
-            subtitle={data.instructorsWorking > 0 ? 'Active today' : 'None scheduled'}
-          />
-          <KpiCard
-            title="Expected Revenue"
-            value={`R${data.expectedRevenue.toLocaleString()}`}
-            trend={`${data.pendingPayments} pending payment`}
-          />
-          <KpiCard
-            title="Pending Payments"
-            value={data.pendingPayments.toString()}
-            severity={data.pendingPayments > 0 ? 'warning' : undefined}
-            onClick={() => {}}
-          />
-        </div>
+        <section aria-label="Operational metrics" className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <MetricCard href="/dashboard/calendar" label="Bookings today" value={String(data.bookingsToday)} note={nextBooking ? `Next at ${nextBooking.time}` : 'No lessons scheduled'} tone="lime" />
+          <MetricCard href="/dashboard/bookings" label="Bookings this week" value={String(data.bookingsThisWeek)} note={`${formatRand(data.revenueThisWeek)} expected`} tone="blue" />
+          <MetricCard href="/dashboard/bookings" label="Awaiting payment" value={String(data.pendingPayments)} note={data.pendingPayments ? 'Needs follow-up' : 'Nothing outstanding today'} tone={data.pendingPayments ? 'yellow' : 'green'} />
+          <MetricCard href="/dashboard/bookings" label="Expected today" value={formatRand(data.expectedRevenue)} note={`${data.instructorsWorking} instructor${data.instructorsWorking === 1 ? '' : 's'} working`} tone="green" />
+        </section>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Schedule */}
-          <div className="lg:col-span-2 bg-white rounded-lg shadow">
-            <div className="p-6 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-gray-900">Today&apos;s Schedule</h2>
-                <Link
-                  href="/dashboard/calendar"
-                  className="text-sm text-blue-600 hover:text-blue-700"
-                >
-                  View Calendar →
-                </Link>
+        <section className="mb-4 grid grid-cols-1 gap-4 xl:grid-cols-12">
+          <article className="overflow-hidden rounded-xl border border-white/10 bg-[#191c19] xl:col-span-7">
+            <PanelHeader title="Attention queue" description="Operational blockers that need a response" count={data.issues.length} />
+            {data.issues.length === 0 ? (
+              <div className="flex min-h-56 flex-col items-center justify-center px-6 py-10 text-center">
+                <span className="grid h-11 w-11 place-items-center rounded-full border border-[#75d69c]/25 bg-[#75d69c]/10 text-[#75d69c]"><CheckIcon /></span>
+                <h2 className="mt-4 text-base font-semibold">All caught up</h2>
+                <p className="mt-1 max-w-sm text-sm text-[#9ba39b]">No payment or schedule issues require attention right now.</p>
+                {nextBooking && <p className="mt-4 text-xs font-medium text-[#cbd1cb]">Next lesson: {nextBooking.time} · {nextBooking.customer}</p>}
               </div>
-            </div>
-            <div className="p-6">
-              {data.schedule.length === 0 ? (
-                <div className="text-center py-12">
-                  <p className="text-gray-500">No bookings for today</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {data.schedule.map((booking) => (
-                    <div
-                      key={booking.id}
-                      className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="text-center min-w-[60px]">
-                          <p className="text-lg font-semibold text-gray-900">{booking.time}</p>
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-900">{booking.customer}</p>
-                          <p className="text-sm text-gray-500">{booking.course}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className="text-sm text-gray-600">{booking.instructor}</span>
+            ) : (
+              <div className="divide-y divide-white/10 p-2">
+                {data.issues.map((issue) => (
+                  <Link key={issue.id} href="/dashboard/bookings" className="group grid min-h-[88px] grid-cols-[8px_minmax(0,1fr)_auto] items-center gap-3 rounded-lg px-3 py-3 transition-colors hover:bg-[#222622] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c9ff32] sm:gap-4">
+                    <span className={`h-9 w-2 rounded-full ${issue.severity === 'high' ? 'bg-[#ff7b72]' : issue.severity === 'medium' ? 'bg-[#f4c95d]' : 'bg-[#8ab4f8]'}`} />
+                    <span className="min-w-0">
+                      <span className="block text-sm font-semibold text-[#eef1ee]">{issue.message}</span>
+                      <span className="mt-1 block text-xs text-[#9ba39b]">{issue.type === 'payment' ? 'Payment follow-up required' : 'Review this booking'}</span>
+                    </span>
+                    <span className="hidden min-h-9 items-center rounded-md border border-white/10 bg-[#222622] px-3 text-xs font-semibold text-[#d7dcd7] group-hover:border-white/20 sm:inline-flex">Review</span>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </article>
+
+          <article className="overflow-hidden rounded-xl border border-white/10 bg-[#191c19] xl:col-span-5">
+            <PanelHeader title="Today&apos;s timeline" description="Africa/Johannesburg" action={{ href: '/dashboard/calendar', label: 'Full calendar' }} />
+            {data.schedule.length === 0 ? (
+              <div className="flex min-h-56 flex-col items-center justify-center px-6 py-10 text-center">
+                <CalendarIcon />
+                <h2 className="mt-4 text-base font-semibold">No lessons today</h2>
+                <p className="mt-1 text-sm text-[#9ba39b]">The calendar is clear for the rest of the day.</p>
+              </div>
+            ) : (
+              <div className="px-4 py-2 sm:px-5">
+                {data.schedule.map((booking, index) => (
+                  <Link key={booking.id} href="/dashboard/bookings" className="group relative grid min-h-[82px] grid-cols-[52px_minmax(0,1fr)] gap-3 py-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c9ff32]">
+                    {index < data.schedule.length - 1 && <span className="absolute bottom-0 left-[27px] top-[47px] w-px bg-white/10" />}
+                    <span className="relative pt-0.5 text-xs font-semibold tabular-nums text-[#e4e8e4]">
+                      {booking.time}
+                      <span className="absolute right-0 top-1.5 h-2 w-2 rounded-full bg-[#c9ff32] shadow-[0_0_0_4px_#191c19]" />
+                    </span>
+                    <span className="min-w-0 pl-1">
+                      <span className="flex flex-wrap items-start justify-between gap-2">
+                        <span className="min-w-0">
+                          <span className="block truncate text-sm font-semibold text-[#eef1ee] group-hover:text-white">{booking.customer}</span>
+                          <span className="mt-0.5 block truncate text-xs text-[#9ba39b]">{booking.course} · {booking.instructor}</span>
+                        </span>
                         <StatusBadge status={booking.status} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
+                      </span>
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </article>
+        </section>
 
-          {/* Issues & Actions */}
-          <div className="space-y-6">
-            {/* Issue Centre */}
-            <div className="bg-white rounded-lg shadow">
-              <div className="p-6 border-b border-gray-200">
-                <h2 className="text-lg font-semibold text-gray-900">Issue Centre</h2>
+        <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <article className="overflow-hidden rounded-xl border border-white/10 bg-[#191c19]">
+            <PanelHeader title="Weekly outlook" description="Confirmed and active training" action={{ href: '/dashboard/bookings', label: 'View bookings' }} />
+            <div className="grid grid-cols-2 divide-x divide-white/10 p-5 sm:p-6">
+              <div className="pr-5">
+                <p className="text-xs font-medium text-[#9ba39b]">Sessions</p>
+                <p className="mt-2 text-3xl font-semibold tracking-[-0.04em] tabular-nums">{data.bookingsThisWeek}</p>
+                <p className="mt-1 text-xs text-[#788078]">Monday–Sunday</p>
               </div>
-              <div className="p-6">
-                {data.issues.length === 0 ? (
-                  <p className="text-gray-500 text-sm">No issues</p>
-                ) : (
-                  <div className="space-y-3">
-                    {data.issues.map((issue) => (
-                      <div
-                        key={issue.id}
-                        className={`p-3 rounded-lg border-l-4 ${
-                          issue.severity === 'high'
-                            ? 'bg-red-50 border-red-500'
-                            : issue.severity === 'medium'
-                            ? 'bg-yellow-50 border-yellow-500'
-                            : 'bg-blue-50 border-blue-500'
-                        }`}
-                      >
-                        <p className="text-sm text-gray-900">{issue.message}</p>
-                        <button className="text-xs text-blue-600 hover:text-blue-700 mt-1 font-medium">
-                          Resolve
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
+              <div className="pl-5">
+                <p className="text-xs font-medium text-[#9ba39b]">Expected revenue</p>
+                <p className="mt-2 text-3xl font-semibold tracking-[-0.04em] tabular-nums">{formatRand(data.revenueThisWeek)}</p>
+                <p className="mt-1 text-xs text-[#788078]">Active bookings</p>
               </div>
             </div>
+          </article>
 
-            {/* Quick Actions */}
-            <div className="bg-white rounded-lg shadow">
-              <div className="p-6 border-b border-gray-200">
-                <h2 className="text-lg font-semibold text-gray-900">Quick Actions</h2>
-              </div>
-              <div className="p-6 space-y-3">
-                <button className="w-full text-left px-4 py-3 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors font-medium">
-                  + New Booking
-                </button>
-                <button className="w-full text-left px-4 py-3 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors font-medium">
-                  ⏸ Block Time
-                </button>
-                <button className="w-full text-left px-4 py-3 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors font-medium">
-                  👤 Add Customer
-                </button>
-                <button className="w-full text-left px-4 py-3 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors font-medium">
-                  💳 Record Payment
-                </button>
-                <button className="w-full text-left px-4 py-3 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors font-medium">
-                  📧 Message Customers
-                </button>
-              </div>
+          <article className="overflow-hidden rounded-xl border border-white/10 bg-[#191c19]">
+            <PanelHeader title="Working actions" description="Every action opens a functioning workspace" />
+            <div className="grid grid-cols-1 gap-2 p-4 sm:grid-cols-3">
+              <ActionLink href="/dashboard/calendar" label="Review schedule" icon={<CalendarIcon />} />
+              <ActionLink href="/dashboard/bookings" label="Manage bookings" icon={<BookingsIcon />} />
+              <ActionLink href="/dashboard/customers" label="Customer records" icon={<CustomersIcon />} />
             </div>
-          </div>
-        </div>
-      </main>
+          </article>
+        </section>
+      </div>
     </div>
   );
 }
 
-function KpiCard({
-  title,
-  value,
-  subtitle,
-  trend,
-  trendUp,
-  severity,
-  onClick,
-}: {
-  title: string;
-  value: string;
-  subtitle?: string;
-  trend?: string;
-  trendUp?: boolean;
-  severity?: 'warning' | 'error';
-  onClick?: () => void;
-}) {
+function MetricCard({ href, label, value, note, tone }: { href: string; label: string; value: string; note: string; tone: 'lime' | 'blue' | 'yellow' | 'green' }) {
+  const tones = { lime: 'bg-[#c9ff32]', blue: 'bg-[#8ab4f8]', yellow: 'bg-[#f4c95d]', green: 'bg-[#75d69c]' };
   return (
-    <div
-      onClick={onClick}
-      className={`bg-white rounded-lg shadow p-6 ${onClick ? 'cursor-pointer hover:shadow-md transition-shadow' : ''}`}
-    >
-      <h3 className="text-sm font-medium text-gray-500">{title}</h3>
-      <p className={`text-3xl font-bold mt-2 ${
-        severity === 'error' ? 'text-red-600' :
-        severity === 'warning' ? 'text-yellow-600' :
-        'text-gray-900'
-      }`}>
-        {value}
-      </p>
-      {subtitle && <p className="text-sm text-gray-500 mt-1">{subtitle}</p>}
-      {trend && (
-        <p className={`text-sm mt-2 ${trendUp ? 'text-green-600' : 'text-gray-500'}`}>
-          {trend}
-        </p>
-      )}
+    <Link href={href} className="group relative min-h-[132px] overflow-hidden rounded-xl border border-white/10 bg-[#191c19] p-5 transition-colors hover:bg-[#222622] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c9ff32]">
+      <span className="flex items-center justify-between text-xs font-medium text-[#9ba39b]"><span>{label}</span><ArrowIcon /></span>
+      <span className="mt-4 block text-3xl font-semibold tracking-[-0.04em] tabular-nums text-[#f4f6f2]">{value}</span>
+      <span className="mt-1 block text-xs text-[#9ba39b]">{note}</span>
+      <span className={`absolute inset-x-0 bottom-0 h-0.5 ${tones[tone]}`} />
+    </Link>
+  );
+}
+
+function PanelHeader({ title, description, count, action }: { title: string; description: string; count?: number; action?: { href: string; label: string } }) {
+  return (
+    <div className="flex min-h-[66px] items-center justify-between gap-4 border-b border-white/10 px-5">
+      <div><h2 className="text-base font-semibold text-[#eef1ee]">{title}</h2><p className="mt-0.5 text-xs text-[#9ba39b]">{description}</p></div>
+      {typeof count === 'number' && <span className={`grid h-7 min-w-7 place-items-center rounded-full px-2 text-xs font-bold ${count ? 'bg-[#f4c95d]/10 text-[#f4d77d]' : 'bg-white/5 text-[#9ba39b]'}`}>{count}</span>}
+      {action && <Link href={action.href} className="inline-flex min-h-11 items-center text-xs font-semibold text-[#c9ff32] hover:text-[#dcff78] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c9ff32]">{action.label}</Link>}
     </div>
   );
 }
 
 function StatusBadge({ status }: { status: string }) {
-  const styles: Record<string, string> = {
-    confirmed: 'bg-green-100 text-green-700',
-    pending_payment: 'bg-yellow-100 text-yellow-700',
-    checked_in: 'bg-blue-100 text-blue-700',
-    completed: 'bg-gray-100 text-gray-700',
-    cancelled: 'bg-red-100 text-red-700',
-  };
-
-  const labels: Record<string, string> = {
-    confirmed: 'Confirmed',
-    pending_payment: 'Pending Payment',
-    checked_in: 'Checked In',
-    completed: 'Completed',
-    cancelled: 'Cancelled',
-  };
-
-  return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${styles[status] || styles.confirmed}`}>
-      {labels[status] || status}
-    </span>
-  );
+  return <span className={`inline-flex min-h-6 items-center rounded-full border px-2 text-[10px] font-semibold ${statusStyles[status] ?? statusStyles.completed}`}>{humanizeDashboardStatus(status)}</span>;
 }
+
+function ActionLink({ href, label, icon }: { href: string; label: string; icon: React.ReactNode }) {
+  return <Link href={href} className="flex min-h-14 items-center gap-3 rounded-lg border border-white/10 bg-[#222622] px-3 text-sm font-semibold text-[#d7dcd7] transition-colors hover:border-white/20 hover:bg-[#292e29] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c9ff32]"><span className="h-5 w-5 text-[#c9ff32] [&>svg]:h-5 [&>svg]:w-5">{icon}</span>{label}</Link>;
+}
+
+function DashboardSkeleton() {
+  return <div aria-label="Loading dashboard" aria-live="polite" className="min-h-[calc(100dvh-4rem)] bg-[#0b0d0c] p-4 sm:p-6 lg:p-8"><div className="mx-auto max-w-[1440px] animate-pulse"><div className="h-20 max-w-md rounded-lg bg-[#191c19]" /><div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">{Array.from({ length: 4 }).map((_, index) => <div key={index} className="h-[132px] rounded-xl border border-white/5 bg-[#191c19]" />)}</div><div className="mt-4 grid gap-4 xl:grid-cols-2"><div className="h-80 rounded-xl border border-white/5 bg-[#191c19]" /><div className="h-80 rounded-xl border border-white/5 bg-[#191c19]" /></div><span className="sr-only">Loading dashboard data</span></div></div>;
+}
+
+function PlusIcon() { return <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M5 12h14" /></svg>; }
+function ArrowIcon() { return <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4 transition-transform group-hover:translate-x-0.5" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M5 12h14M13 6l6 6-6 6" /></svg>; }
+function CheckIcon() { return <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2"><path d="m5 12 4 4L19 6" /></svg>; }
+function ErrorIcon() { return <svg aria-hidden="true" viewBox="0 0 24 24" className="mx-auto h-9 w-9 text-[#ff7b72]" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="9" /><path d="M12 7v6M12 17h.01" /></svg>; }
+function CalendarIcon() { return <svg aria-hidden="true" viewBox="0 0 24 24" className="h-6 w-6 text-[#8ab4f8]" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M8 3v4M16 3v4M3 10h18" /></svg>; }
+function BookingsIcon() { return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M6 3h12v18H6zM9 8h6M9 12h6M9 16h4" /></svg>; }
+function CustomersIcon() { return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="9" cy="8" r="3" /><path d="M3.5 20v-2a5.5 5.5 0 0 1 11 0v2M16 5.5a3 3 0 0 1 0 5.8M17 14a5 5 0 0 1 3.5 4.8V20" /></svg>; }
