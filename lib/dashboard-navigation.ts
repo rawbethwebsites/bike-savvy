@@ -5,7 +5,7 @@ export type DashboardNavigationItem = {
 };
 
 export const dashboardNavigation: DashboardNavigationItem[] = [
-  { label: 'Dashboard', href: '/dashboard', icon: 'dashboard' },
+  { label: 'Today', href: '/dashboard', icon: 'dashboard' },
   { label: 'Calendar', href: '/dashboard/calendar', icon: 'calendar' },
   { label: 'Bookings', href: '/dashboard/bookings', icon: 'bookings' },
   { label: 'Customers', href: '/dashboard/customers', icon: 'customers' },
@@ -14,4 +14,11 @@ export const dashboardNavigation: DashboardNavigationItem[] = [
 export function isDashboardPathActive(pathname: string, href: string) {
   if (href === '/dashboard') return pathname === href;
   return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+export function getDashboardPageTitle(pathname: string) {
+  return (
+    dashboardNavigation.find((item) => isDashboardPathActive(pathname, item.href))
+      ?.label ?? 'Operations'
+  );
 }
