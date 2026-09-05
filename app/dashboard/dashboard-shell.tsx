@@ -108,7 +108,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
           </a>
           <Link
             href="/dashboard/bookings"
-            className="hidden min-h-11 items-center rounded-lg bg-[#A8C45A] px-4 text-sm font-semibold text-[#0b0d0c] transition-colors hover:bg-[#BDD579] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A8C45A] focus-visible:ring-offset-2 focus-visible:ring-offset-[#111311] sm:inline-flex"
+            className="hidden min-h-11 items-center rounded-lg border border-[#A8C45A]/40 bg-[#242b1f] px-4 text-sm font-semibold text-[#DCE8B8] transition-colors hover:bg-[#2d3624] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A8C45A] focus-visible:ring-offset-2 focus-visible:ring-offset-[#111311] sm:inline-flex"
           >
             Bookings
           </Link>
@@ -142,7 +142,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                 onClick={() => setMenuOpen(false)}
                 className={`flex min-h-12 items-center gap-3 rounded-lg px-3 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A8C45A] ${
                   active
-                    ? 'bg-[#A8C45A] text-[#0b0d0c]'
+                    ? 'bg-[#A8C45A]/15 text-[#DCE8B8] shadow-[inset_3px_0_0_#A8C45A]'
                     : 'text-[#bdc3bd] hover:bg-white/10 hover:text-white'
                 }`}
               >

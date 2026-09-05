@@ -20,7 +20,8 @@ The homepage must not be a passive analytics screen. Every actionable item links
 - Dark-mode native, compact, operational, and calm.
 - Cards must be visibly lighter than the page background.
 - Sharp or lightly rounded geometry; no inflated pill-heavy SaaS styling.
-- Lime is reserved for the primary action, active navigation, and healthy states.
+- Olive-lime is used as a restrained signal, not a large solid surface. Active navigation and primary actions use dark olive-tinted surfaces with lime borders/text.
+- Solid olive-lime is limited to the compact BS brand mark, focus affordances, and small status/data indicators.
 - Status never relies on color alone; always pair color with text or an icon.
 - No emoji as interface icons. Use one consistent SVG stroke family.
 - No decorative charts on the homepage. Prioritize queues, schedules, money, and availability.

@@ -109,7 +109,7 @@ export default function TodayDashboard() {
             <Link href="/dashboard/calendar" className="inline-flex min-h-11 items-center justify-center rounded-lg border border-white/10 bg-[#191c19] px-4 text-sm font-semibold text-[#d7dcd7] transition-colors hover:bg-[#222622] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A8C45A]">
               View calendar
             </Link>
-            <Link href="/dashboard/bookings" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[#A8C45A] px-4 text-sm font-semibold text-[#0b0d0c] transition-colors hover:bg-[#BDD579] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A8C45A] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b0d0c]">
+            <Link href="/dashboard/bookings" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-[#A8C45A]/40 bg-[#242b1f] px-4 text-sm font-semibold text-[#DCE8B8] transition-colors hover:bg-[#2d3624] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A8C45A] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b0d0c]">
               <PlusIcon />
               Bookings
             </Link>
