@@ -61,7 +61,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
     <div className="dashboard-shell min-h-dvh bg-[#0b0d0c] text-[#f4f6f2]">
       <a
         href="#dashboard-content"
-        className="fixed left-4 top-3 z-[70] -translate-y-20 rounded-md bg-[#c9ff32] px-4 py-2 font-semibold text-[#0b0d0c] transition-transform focus:translate-y-0"
+        className="fixed left-4 top-3 z-[70] -translate-y-20 rounded-md bg-[#A8C45A] px-4 py-2 font-semibold text-[#0b0d0c] transition-transform focus:translate-y-0"
       >
         Skip to content
       </a>
@@ -73,7 +73,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
           aria-expanded={menuOpen}
           aria-controls="dashboard-navigation"
           onClick={() => setMenuOpen((open) => !open)}
-          className="mr-3 grid h-11 w-11 shrink-0 place-items-center rounded-lg text-[#d4d9d4] transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c9ff32] md:hidden"
+          className="mr-3 grid h-11 w-11 shrink-0 place-items-center rounded-lg text-[#d4d9d4] transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A8C45A] md:hidden"
         >
           {menuOpen ? (
             <svg viewBox="0 0 24 24" aria-hidden="true" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2">
@@ -87,7 +87,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
         </button>
 
         <Link href="/dashboard" className="flex min-h-11 items-center gap-3" aria-label="Bike Savvy dashboard home">
-          <span className="grid h-9 w-9 place-items-center bg-[#c9ff32] text-xs font-black tracking-[-0.04em] text-[#0b0d0c]">BS</span>
+          <span className="grid h-9 w-9 place-items-center bg-[#A8C45A] text-xs font-black tracking-[-0.04em] text-[#0b0d0c]">BS</span>
           <span className="hidden sm:block">
             <span className="block text-sm font-bold leading-tight">Bike Savvy</span>
             <span className="block text-[10px] font-semibold uppercase tracking-[0.16em] text-[#9ba39b]">Operations</span>
@@ -102,13 +102,13 @@ export default function DashboardShell({ children }: { children: React.ReactNode
             href="/"
             target="_blank"
             rel="noopener noreferrer"
-            className="hidden min-h-11 items-center rounded-lg px-3 text-sm font-medium text-[#9ba39b] transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c9ff32] sm:inline-flex"
+            className="hidden min-h-11 items-center rounded-lg px-3 text-sm font-medium text-[#9ba39b] transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A8C45A] sm:inline-flex"
           >
             View website
           </a>
           <Link
             href="/dashboard/bookings"
-            className="hidden min-h-11 items-center rounded-lg bg-[#c9ff32] px-4 text-sm font-semibold text-[#0b0d0c] transition-colors hover:bg-[#dcff78] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c9ff32] focus-visible:ring-offset-2 focus-visible:ring-offset-[#111311] sm:inline-flex"
+            className="hidden min-h-11 items-center rounded-lg bg-[#A8C45A] px-4 text-sm font-semibold text-[#0b0d0c] transition-colors hover:bg-[#BDD579] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A8C45A] focus-visible:ring-offset-2 focus-visible:ring-offset-[#111311] sm:inline-flex"
           >
             Bookings
           </Link>
@@ -140,9 +140,9 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                 href={item.href}
                 aria-current={active ? 'page' : undefined}
                 onClick={() => setMenuOpen(false)}
-                className={`flex min-h-12 items-center gap-3 rounded-lg px-3 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c9ff32] ${
+                className={`flex min-h-12 items-center gap-3 rounded-lg px-3 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A8C45A] ${
                   active
-                    ? 'bg-[#c9ff32] text-[#0b0d0c]'
+                    ? 'bg-[#A8C45A] text-[#0b0d0c]'
                     : 'text-[#bdc3bd] hover:bg-white/10 hover:text-white'
                 }`}
               >
@@ -158,7 +158,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
             href="https://t.me/Bikesavvy_bot"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex min-h-12 items-center gap-3 rounded-lg px-3 text-sm font-medium text-[#bdc3bd] transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c9ff32]"
+            className="flex min-h-12 items-center gap-3 rounded-lg px-3 text-sm font-medium text-[#bdc3bd] transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A8C45A]"
           >
             <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8">
               <path d="M21 4L3.8 10.6c-1.2.5-1.2 1.1-.2 1.4l4.4 1.4 1.7 5.2c.2.7.1 1 .8 1 .5 0 .8-.2 1-.4l2.1-2 4.4 3.2c.8.4 1.4.2 1.6-.8L22.4 6c.3-1.1-.4-1.6-1.4-1.2Z" />

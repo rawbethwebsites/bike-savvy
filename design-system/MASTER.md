@@ -38,7 +38,7 @@ The homepage must not be a passive analytics screen. Every actionable item links
 | `--dashboard-border` | `rgba(255,255,255,.10)` | Standard divider and card border |
 | `--dashboard-text` | `#f4f6f2` | Primary text |
 | `--dashboard-muted` | `#9ba39b` | Secondary labels and metadata |
-| `--dashboard-accent` | `#c9ff32` | Bike Savvy primary action and active state |
+| `--dashboard-accent` | `#A8C45A` | Bike Savvy primary action and active state |
 | `--dashboard-accent-ink` | `#0b0d0c` | Text/icons on lime |
 | `--dashboard-success` | `#75d69c` | Confirmed, paid, available |
 | `--dashboard-warning` | `#f4c95d` | Pending, awaiting action |

@@ -79,7 +79,7 @@ export default function TodayDashboard() {
             <button
               type="button"
               onClick={() => void fetchDashboard()}
-              className="mt-5 min-h-11 rounded-lg bg-[#c9ff32] px-5 text-sm font-semibold text-[#0b0d0c] hover:bg-[#dcff78] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c9ff32] focus-visible:ring-offset-2 focus-visible:ring-offset-[#191c19]"
+              className="mt-5 min-h-11 rounded-lg bg-[#A8C45A] px-5 text-sm font-semibold text-[#0b0d0c] hover:bg-[#BDD579] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A8C45A] focus-visible:ring-offset-2 focus-visible:ring-offset-[#191c19]"
             >
               Try again
             </button>
@@ -106,10 +106,10 @@ export default function TodayDashboard() {
             <p className="mt-1 text-sm text-[#9ba39b]">Priorities, lessons and revenue in one live view.</p>
           </div>
           <div className="grid grid-cols-1 gap-2 min-[480px]:grid-cols-2 sm:flex">
-            <Link href="/dashboard/calendar" className="inline-flex min-h-11 items-center justify-center rounded-lg border border-white/10 bg-[#191c19] px-4 text-sm font-semibold text-[#d7dcd7] transition-colors hover:bg-[#222622] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c9ff32]">
+            <Link href="/dashboard/calendar" className="inline-flex min-h-11 items-center justify-center rounded-lg border border-white/10 bg-[#191c19] px-4 text-sm font-semibold text-[#d7dcd7] transition-colors hover:bg-[#222622] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A8C45A]">
               View calendar
             </Link>
-            <Link href="/dashboard/bookings" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[#c9ff32] px-4 text-sm font-semibold text-[#0b0d0c] transition-colors hover:bg-[#dcff78] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c9ff32] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b0d0c]">
+            <Link href="/dashboard/bookings" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[#A8C45A] px-4 text-sm font-semibold text-[#0b0d0c] transition-colors hover:bg-[#BDD579] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A8C45A] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b0d0c]">
               <PlusIcon />
               Bookings
             </Link>
@@ -136,7 +136,7 @@ export default function TodayDashboard() {
             ) : (
               <div className="divide-y divide-white/10 p-2">
                 {data.issues.map((issue) => (
-                  <Link key={issue.id} href="/dashboard/bookings" className="group grid min-h-[88px] grid-cols-[8px_minmax(0,1fr)_auto] items-center gap-3 rounded-lg px-3 py-3 transition-colors hover:bg-[#222622] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c9ff32] sm:gap-4">
+                  <Link key={issue.id} href="/dashboard/bookings" className="group grid min-h-[88px] grid-cols-[8px_minmax(0,1fr)_auto] items-center gap-3 rounded-lg px-3 py-3 transition-colors hover:bg-[#222622] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A8C45A] sm:gap-4">
                     <span className={`h-9 w-2 rounded-full ${issue.severity === 'high' ? 'bg-[#ff7b72]' : issue.severity === 'medium' ? 'bg-[#f4c95d]' : 'bg-[#8ab4f8]'}`} />
                     <span className="min-w-0">
                       <span className="block text-sm font-semibold text-[#eef1ee]">{issue.message}</span>
@@ -160,11 +160,11 @@ export default function TodayDashboard() {
             ) : (
               <div className="px-4 py-2 sm:px-5">
                 {data.schedule.map((booking, index) => (
-                  <Link key={booking.id} href="/dashboard/bookings" className="group relative grid min-h-[82px] grid-cols-[52px_minmax(0,1fr)] gap-3 py-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c9ff32]">
+                  <Link key={booking.id} href="/dashboard/bookings" className="group relative grid min-h-[82px] grid-cols-[52px_minmax(0,1fr)] gap-3 py-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A8C45A]">
                     {index < data.schedule.length - 1 && <span className="absolute bottom-0 left-[27px] top-[47px] w-px bg-white/10" />}
                     <span className="relative pt-0.5 text-xs font-semibold tabular-nums text-[#e4e8e4]">
                       {booking.time}
-                      <span className="absolute right-0 top-1.5 h-2 w-2 rounded-full bg-[#c9ff32] shadow-[0_0_0_4px_#191c19]" />
+                      <span className="absolute right-0 top-1.5 h-2 w-2 rounded-full bg-[#A8C45A] shadow-[0_0_0_4px_#191c19]" />
                     </span>
                     <span className="min-w-0 pl-1">
                       <span className="flex flex-wrap items-start justify-between gap-2">
@@ -214,9 +214,9 @@ export default function TodayDashboard() {
 }
 
 function MetricCard({ href, label, value, note, tone }: { href: string; label: string; value: string; note: string; tone: 'lime' | 'blue' | 'yellow' | 'green' }) {
-  const tones = { lime: 'bg-[#c9ff32]', blue: 'bg-[#8ab4f8]', yellow: 'bg-[#f4c95d]', green: 'bg-[#75d69c]' };
+  const tones = { lime: 'bg-[#A8C45A]', blue: 'bg-[#8ab4f8]', yellow: 'bg-[#f4c95d]', green: 'bg-[#75d69c]' };
   return (
-    <Link href={href} className="group relative min-h-[132px] overflow-hidden rounded-xl border border-white/10 bg-[#191c19] p-5 transition-colors hover:bg-[#222622] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c9ff32]">
+    <Link href={href} className="group relative min-h-[132px] overflow-hidden rounded-xl border border-white/10 bg-[#191c19] p-5 transition-colors hover:bg-[#222622] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A8C45A]">
       <span className="flex items-center justify-between text-xs font-medium text-[#9ba39b]"><span>{label}</span><ArrowIcon /></span>
       <span className="mt-4 block text-3xl font-semibold tracking-[-0.04em] tabular-nums text-[#f4f6f2]">{value}</span>
       <span className="mt-1 block text-xs text-[#9ba39b]">{note}</span>
@@ -230,7 +230,7 @@ function PanelHeader({ title, description, count, action }: { title: string; des
     <div className="flex min-h-[66px] items-center justify-between gap-4 border-b border-white/10 px-5">
       <div><h2 className="text-base font-semibold text-[#eef1ee]">{title}</h2><p className="mt-0.5 text-xs text-[#9ba39b]">{description}</p></div>
       {typeof count === 'number' && <span className={`grid h-7 min-w-7 place-items-center rounded-full px-2 text-xs font-bold ${count ? 'bg-[#f4c95d]/10 text-[#f4d77d]' : 'bg-white/5 text-[#9ba39b]'}`}>{count}</span>}
-      {action && <Link href={action.href} className="inline-flex min-h-11 items-center text-xs font-semibold text-[#c9ff32] hover:text-[#dcff78] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c9ff32]">{action.label}</Link>}
+      {action && <Link href={action.href} className="inline-flex min-h-11 items-center text-xs font-semibold text-[#A8C45A] hover:text-[#BDD579] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A8C45A]">{action.label}</Link>}
     </div>
   );
 }
@@ -240,7 +240,7 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 function ActionLink({ href, label, icon }: { href: string; label: string; icon: React.ReactNode }) {
-  return <Link href={href} className="flex min-h-14 items-center gap-3 rounded-lg border border-white/10 bg-[#222622] px-3 text-sm font-semibold text-[#d7dcd7] transition-colors hover:border-white/20 hover:bg-[#292e29] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c9ff32]"><span className="h-5 w-5 text-[#c9ff32] [&>svg]:h-5 [&>svg]:w-5">{icon}</span>{label}</Link>;
+  return <Link href={href} className="flex min-h-14 items-center gap-3 rounded-lg border border-white/10 bg-[#222622] px-3 text-sm font-semibold text-[#d7dcd7] transition-colors hover:border-white/20 hover:bg-[#292e29] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A8C45A]"><span className="h-5 w-5 text-[#A8C45A] [&>svg]:h-5 [&>svg]:w-5">{icon}</span>{label}</Link>;
 }
 
 function DashboardSkeleton() {
